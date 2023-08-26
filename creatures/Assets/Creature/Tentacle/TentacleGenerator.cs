@@ -97,7 +97,7 @@ public class TentacleGenerator : MonoBehaviour
         Segment firstSegment = new Segment(currentOrigin, firstDestination, firstSegmentPrefab);
 
         segments.Insert(0, firstSegment);
-
+           
         currentOrigin = firstDestination;
 
         for (int i = 1; i < numberOfSegments; i++)
