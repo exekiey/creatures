@@ -75,7 +75,7 @@ public class TentacleGenerator : MonoBehaviour
     {
 
         lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.positionCount = numberOfSegments;
+        lineRenderer.positionCount = numberOfSegments + 1;
 
         edgeCollider2D = GetComponent<EdgeCollider2D>();
 
@@ -84,8 +84,6 @@ public class TentacleGenerator : MonoBehaviour
         segments = new List<Segment>(numberOfSegments);
 
         points = new List<Point>();
-
-        Debug.Log(halfSegment);
 
         GenerateTentacle();
 
@@ -148,48 +146,36 @@ public class TentacleGenerator : MonoBehaviour
 
                 currentPoint.previousPosition = previousPosition;
 
-                currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
-                //currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
+                //currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
+                currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
             }
 
         }
 
         Point lastPoint = points.Last();
 
-        lastPoint.currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        if (Input.GetMouseButton(0))
+        {
+            lastPoint.currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            //lastPoint.locked = true;
+        }
 
 
         //lastPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
+           
 
-
-        for (int i = 0;i < distanceCheckIterations;i++)
+        for (int i = 1; i < points.Count; i++)
         {
+            Vector2 currentPointPos = points[i].currentPosition;
+            Vector2 previousPointPos = points[i-1].currentPosition;
 
-            foreach (Segment currentSegment in segments)
-            {
+            Vector2 segmentOrientation = (currentPointPos - previousPointPos).normalized;
 
+            float distance = Vector2.Distance(previousPointPos, segmentOrientation);
 
-                Vector2 positionA = currentSegment.pointA.currentPosition;
-                Vector2 positionB = currentSegment.pointB.currentPosition;
+            float error = distance - segmentLength;
 
-                Vector2 center = (positionA + positionB) / 2;
-                Vector2 orientation = (positionB - positionA).normalized;
-
-                if (!currentSegment.pointA.locked)
-                {
-                    currentSegment.pointA.currentPosition = center - orientation * halfSegment;
-                }
-
-                if (!currentSegment.pointB.locked)
-                {
-                    currentSegment.pointB.currentPosition = center + orientation * halfSegment;
-                }
-
-            }
-
-
-
-
+            points[i].currentPosition = segmentOrientation * error;
         }
 
         foreach (Point currentPoint in points)
@@ -206,15 +192,16 @@ public class TentacleGenerator : MonoBehaviour
             }
 
         }
-
     }
 
 
 
     void DrawLine()
     {
-        Vector3[] positions = new Vector3[numberOfSegments];
+        Vector3[] positions = new Vector3[numberOfSegments + 1];
 
+
+        Debug.Log(positions.Length);
         for (int i = 0; i < numberOfSegments; i++)
         {
 
@@ -224,9 +211,10 @@ public class TentacleGenerator : MonoBehaviour
 
         }
 
-        Vector3 lastSegmentPointB = segments[numberOfSegments - 1].pointB.currentPosition;
+        
+        Vector3 lastSegmentPointB = segments.Last().pointB.currentPosition;
 
-        positions[numberOfSegments - 1] = lastSegmentPointB;
+        positions[numberOfSegments] = lastSegmentPointB;
 
         lineRenderer.SetPositions(positions);
 
@@ -254,6 +242,9 @@ public class TentacleGenerator : MonoBehaviour
                 Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot1_pix16_gizmo");
 
             }
+
+            Gizmos.DrawIcon(points.Last().currentPosition, "sv_icon_dot6_pix16_gizmo");
+
         }
 
     }
