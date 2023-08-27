@@ -156,6 +156,9 @@ public class TentacleGenerator : MonoBehaviour
 
         Point lastPoint = points.Last();
 
+        lastPoint.currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+
         //lastPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
 
 
@@ -184,13 +187,29 @@ public class TentacleGenerator : MonoBehaviour
 
             }
 
+
+
+
         }
 
+        foreach (Point currentPoint in points)
+        {
+
+            bool isInsideCollider = Physics2D.OverlapPoint(currentPoint.currentPosition);
+
+            if (isInsideCollider)
+            {
+
+                currentPoint.currentPosition = currentPoint.previousPosition;
 
 
+            }
 
+        }
 
     }
+
+
 
     void DrawLine()
     {
@@ -213,35 +232,12 @@ public class TentacleGenerator : MonoBehaviour
 
     }
 
-    private void PlaceCollider()
-    {
-
-        List<Vector2> points = new List<Vector2>(numberOfSegments);
-
-        for (int i = 0; i < numberOfSegments; i++)
-        {
-
-            Vector3 currentPosition = segments[i].pointA.currentPosition;
-            points.Insert(i, currentPosition);
-
-        }
-
-
-        Vector3 lastSegmentPointB = segments[numberOfSegments - 1].pointB.currentPosition;
-        points.Insert(numberOfSegments - 1, lastSegmentPointB);
-
-        edgeCollider2D.SetPoints(points);
-
-    }
-
     // Update is called once per frame
     void Update()
     {
         SimulateTentacle();
 
         DrawLine();
-
-        PlaceCollider();
     }
 
 
