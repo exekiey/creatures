@@ -2,40 +2,66 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
-
-public struct Segment
-{
-
-    public Vector2 from;
-    public Vector2 to;
-    public GameObject segmentObject;
-
-    public Segment(Vector2 from, Vector2 to, GameObject segmentObject)
-    {
-        this.from = from;
-        this.to = to;
-        this.segmentObject = segmentObject;
-    }
-}
+using UnityEngine.Rendering;
 
 public class TentacleGenerator : MonoBehaviour
 {
+    public class Point
+    {
+
+        public Vector2 currentPosition;
+        public Vector2 previousPosition;
+        public bool locked;
+
+        public Point(Vector2 currentPosition, Vector2 previousPosition, bool locked)
+        {
+            this.currentPosition = currentPosition;
+            this.previousPosition = previousPosition;
+            this.locked = locked;
+
+        }
+
+        public Point(Vector2 currentPosition, Vector2 previousPosition)
+        {
+
+            this.currentPosition = currentPosition;
+            this.previousPosition = previousPosition;
+        }
+
+    }
+
+    public struct Segment
+    {
+
+        public Point pointA;
+        public Point pointB;
+
+        public Segment(Point pointA, Point pointB)
+        {
+
+            this.pointA = pointA;
+
+            this.pointB = pointB;
+
+        }
+    }
 
     [SerializeField] int numberOfSegments;
     [SerializeField] float tentacleLength;
+    [SerializeField] int distanceCheckIterations = 50;
+    [SerializeField] float gravity = 10f;
     GameObject originObject;
 
-    Rigidbody2D rigidbody2D;
+    LineRenderer lineRenderer;
 
     float segmentLength;
+    private float halfSegment;
     Vector2 origin;
 
     [SerializeField] float tentacleWidth;
 
-    List<Segment> segments;
-
-    HingeJoint2D hingeJoint2D;
+    public List<Segment> segments;
+    List<Point> points;
 
 
     [SerializeField] GameObject segmentPrefab;
@@ -45,116 +71,180 @@ public class TentacleGenerator : MonoBehaviour
     // Start is called before the first frame update
     void Awake()
     {
+
+        lineRenderer = GetComponent<LineRenderer>();
+        lineRenderer.positionCount = numberOfSegments;
+
         segmentLength = tentacleLength / numberOfSegments;
+        halfSegment = segmentLength / 2;
         segments = new List<Segment>(numberOfSegments);
-        originObject = gameObject.transform.parent.gameObject;
-        origin = originObject.transform.position;
 
-        hingeJoint2D = GetComponent<HingeJoint2D>();
+        points = new List<Point>();
 
-        rigidbody2D = GetComponentInParent<Rigidbody2D>();
+        Debug.Log(halfSegment);
 
-    }
-
-    private void Start()
-    {
         GenerateTentacle();
+
+        segments[0].pointA.locked = true;
+
     }
 
     void GenerateTentacle()
     {
+        float firstCenter = origin.x;
+
+        Point firstLeftPoint = new Point(new Vector2(firstCenter - halfSegment, origin.y), new Vector2(firstCenter - halfSegment, origin.y));
+        Point firstRightPoint = new Point(new Vector2(firstCenter + halfSegment, origin.y), new Vector2(firstCenter + halfSegment, origin.y));
+
+        points.Add(firstLeftPoint);
 
 
-
-        sucker.Distance = tentacleLength;
-
-        float solapationDistance = segmentLength / 5;
-
-        Vector2 currentOrigin = origin;
-        Vector2 firstDestination = currentOrigin + new Vector2(segmentLength, 0);
-
-        Vector2 firstFixedPosition = new Vector2(currentOrigin.x + segmentLength / 2, origin.y);
-
-        firstFixedPosition = firstFixedPosition - new Vector2(solapationDistance, 0);
-
-        GameObject firstSegmentPrefab = Instantiate(segmentPrefab, firstFixedPosition, Quaternion.identity);
-
-        HingeJoint2D firstHingeJoint = firstSegmentPrefab.GetComponent<HingeJoint2D>();
-        firstHingeJoint.anchor = new Vector2(-0.5f, 0);
-        firstHingeJoint.connectedBody = rigidbody2D;
-
-        CustomStrictDistanceJoint firstDistanceJoint = firstSegmentPrefab.GetComponent<CustomStrictDistanceJoint>();
-        firstDistanceJoint.distance = 0.5f;
-        firstDistanceJoint.connectedBody = rigidbody2D;
-        firstDistanceJoint.connectedAnchor = new Vector2(segmentLength / 2, 0);
-        firstDistanceJoint.anchor = new Vector2(-segmentLength / 2, 0);
-
-
-        firstSegmentPrefab.name = "0";
-
-        firstSegmentPrefab.transform.localScale = new Vector2(segmentLength, tentacleWidth);
-
-        Segment firstSegment = new Segment(currentOrigin, firstDestination, firstSegmentPrefab);
+        Segment firstSegment = new Segment(firstLeftPoint, firstRightPoint);
 
         segments.Insert(0, firstSegment);
-           
-        currentOrigin = firstDestination;
-
         for (int i = 1; i < numberOfSegments; i++)
         {
 
-            Vector2 currentDestination = currentOrigin + new Vector2(segmentLength, 0);
 
-            Vector2 fixedPosition = new Vector2(currentOrigin.x + segmentLength / 2, origin.y);
+            float center = segmentLength * i + origin.x;
 
-            fixedPosition = fixedPosition - new Vector2(solapationDistance, 0);
+            Point leftPoint = segments[i - 1].pointB;
+            Point rightPoint = new Point(new Vector2(center + halfSegment, origin.y), new Vector2(center + halfSegment, origin.y));
 
-            GameObject currentSegmentPrefab = Instantiate(segmentPrefab, fixedPosition, Quaternion.identity);
+            points.Add(leftPoint);
 
-            currentSegmentPrefab.GetComponent<SpriteRenderer>().color = Random.ColorHSV();
+            if (i == numberOfSegments - 1)
+            {
+                points.Add(rightPoint);
+            }
 
-            currentSegmentPrefab.name = i.ToString();
+            Segment currentSegment = new Segment(leftPoint, rightPoint);
 
-            currentSegmentPrefab.transform.localScale = new Vector2(segmentLength, tentacleWidth);
-
-            GameObject previousSegmentPrefab = segments[i - 1].segmentObject;
-
-            Rigidbody2D previousRigidbody = previousSegmentPrefab.GetComponent<Rigidbody2D>();
-
-            HingeJoint2D currentHingeJoint = currentSegmentPrefab.GetComponent<HingeJoint2D>();
-            currentHingeJoint.anchor = new Vector2(-0.5f, 0);
-            currentHingeJoint.connectedBody = previousRigidbody;
-
-            CustomStrictDistanceJoint currentDistanceJoint = currentSegmentPrefab.GetComponent<CustomStrictDistanceJoint>();
-            currentDistanceJoint.distance = 0.5f;
-            currentDistanceJoint.connectedBody = previousRigidbody;
-            currentDistanceJoint.connectedAnchor = new Vector2(segmentLength / 2, 0);
-            currentDistanceJoint.anchor = new Vector2(-segmentLength / 2, 0);
-
-            segments.Insert(i, new Segment(currentOrigin, currentDestination, currentSegmentPrefab));
-            currentOrigin = currentDestination;
-
+            segments.Insert(i, currentSegment);
 
         }
 
+
+    }
+
+    void SimulateTentacle()
+    {
         
-        HingeJoint2D suckerTentacleHingeJoint2D = sucker.TentacleJoint;
-        suckerTentacleHingeJoint2D.anchor = new Vector2(-0.5f, 0);
-        suckerTentacleHingeJoint2D.connectedBody = segments.Last<Segment>().segmentObject.GetComponent<Rigidbody2D>();
+        foreach (Point currentPoint in points)
+        {
 
-        Vector2 suckerFixedPosition = new Vector2(currentOrigin.x + sucker.Object.transform.localScale.x / 2, origin.y);
-        suckerTentacleHingeJoint2D.transform.position = suckerFixedPosition;
+            if (!currentPoint.locked)
+            {
+
+                Vector2 previousPosition = currentPoint.currentPosition;
+
+                Vector2 currentVelocity = currentPoint.currentPosition - currentPoint.previousPosition;
+
+                currentPoint.currentPosition += currentVelocity;
+
+                currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
+
+                currentPoint.previousPosition = previousPosition;
+
+            }
+
+        }
+
+        for (int i = 0;i < distanceCheckIterations;i++)
+        {
+
+            int counter = 0;
+
+            foreach (Segment currentSegment in segments)
+            {
+
+
+                Vector2 positionA = currentSegment.pointA.currentPosition;
+                Vector2 positionB = currentSegment.pointB.currentPosition;
+
+                Vector2 center = (positionA + positionB) / 2;
+                Vector2 orientation = (positionB - positionA).normalized;
+
+                if (!currentSegment.pointA.locked)
+                {
+                    currentSegment.pointA.currentPosition = center - orientation * halfSegment;
+                }
+
+                if (!currentSegment.pointB.locked)
+                {
+                    currentSegment.pointB.currentPosition = center + orientation * halfSegment;
+                }
+
+                if (counter == 0 && i == 0)
+                {
+
+                    Debug.Log("------------");
+
+                    Debug.Log("positionA" + ":" + positionA);
+                    Debug.Log("positionB" + ":" + positionB);
+
+                    Debug.Log("center" + ":" + center);
+
+                    Debug.Log("orientation" + ":" + orientation);
+
+
+                    Debug.Log("fixedPointB" + ":" + (center + orientation * halfSegment));
+
+                    Debug.Log("------------");
+                }
+                counter++;
+
+            }
+
+        }
+
+        Vector3[] positions = new Vector3[numberOfSegments];
+
+        for (int i = 0; i < numberOfSegments;i++)
+        {
+
+            Vector3 currentPosition = segments[i].pointA.currentPosition;
+
+            positions[i] = currentPosition;
+
+        }
+
+        positions[numberOfSegments - 1] = segments[numberOfSegments - 1].pointB.currentPosition;
+
+        lineRenderer.SetPositions(positions);
 
 
 
-        hingeJoint2D.connectedBody = segments[0].segmentObject.GetComponent<Rigidbody2D>();
-        hingeJoint2D.anchor = new Vector2(0.5f, 0);
+    }
+
+    void DrawLine()
+    {
+
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        SimulateTentacle();
+
+        DrawLine();
+    }
+
+
+    private void OnDrawGizmos()
+    {
+
+        if (points != null)
+        {
+
+            foreach (Point point in points)
+            {
+
+                Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot1_pix16_gizmo");
+
+            }
+        }
+
     }
 }
