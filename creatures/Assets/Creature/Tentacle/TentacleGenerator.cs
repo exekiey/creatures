@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,6 +54,7 @@ public class TentacleGenerator : MonoBehaviour
     GameObject originObject;
 
     LineRenderer lineRenderer;
+    EdgeCollider2D edgeCollider2D;
 
     float segmentLength;
     private float halfSegment;
@@ -74,6 +76,8 @@ public class TentacleGenerator : MonoBehaviour
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = numberOfSegments;
+
+        edgeCollider2D = GetComponent<EdgeCollider2D>();
 
         segmentLength = tentacleLength / numberOfSegments;
         halfSegment = segmentLength / 2;
@@ -142,18 +146,21 @@ public class TentacleGenerator : MonoBehaviour
 
                 currentPoint.currentPosition += currentVelocity;
 
-                currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
-
                 currentPoint.previousPosition = previousPosition;
 
+                currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
+                //currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
             }
 
         }
 
+        Point lastPoint = points.Last();
+
+        //lastPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
+
+
         for (int i = 0;i < distanceCheckIterations;i++)
         {
-
-            int counter = 0;
 
             foreach (Segment currentSegment in segments)
             {
@@ -175,32 +182,21 @@ public class TentacleGenerator : MonoBehaviour
                     currentSegment.pointB.currentPosition = center + orientation * halfSegment;
                 }
 
-                if (counter == 0 && i == 0)
-                {
-
-                    Debug.Log("------------");
-
-                    Debug.Log("positionA" + ":" + positionA);
-                    Debug.Log("positionB" + ":" + positionB);
-
-                    Debug.Log("center" + ":" + center);
-
-                    Debug.Log("orientation" + ":" + orientation);
-
-
-                    Debug.Log("fixedPointB" + ":" + (center + orientation * halfSegment));
-
-                    Debug.Log("------------");
-                }
-                counter++;
-
             }
 
         }
 
+
+
+
+
+    }
+
+    void DrawLine()
+    {
         Vector3[] positions = new Vector3[numberOfSegments];
 
-        for (int i = 0; i < numberOfSegments;i++)
+        for (int i = 0; i < numberOfSegments; i++)
         {
 
             Vector3 currentPosition = segments[i].pointA.currentPosition;
@@ -209,17 +205,32 @@ public class TentacleGenerator : MonoBehaviour
 
         }
 
-        positions[numberOfSegments - 1] = segments[numberOfSegments - 1].pointB.currentPosition;
+        Vector3 lastSegmentPointB = segments[numberOfSegments - 1].pointB.currentPosition;
+
+        positions[numberOfSegments - 1] = lastSegmentPointB;
 
         lineRenderer.SetPositions(positions);
 
-
-
     }
 
-    void DrawLine()
+    private void PlaceCollider()
     {
 
+        List<Vector2> points = new List<Vector2>(numberOfSegments);
+
+        for (int i = 0; i < numberOfSegments; i++)
+        {
+
+            Vector3 currentPosition = segments[i].pointA.currentPosition;
+            points.Insert(i, currentPosition);
+
+        }
+
+
+        Vector3 lastSegmentPointB = segments[numberOfSegments - 1].pointB.currentPosition;
+        points.Insert(numberOfSegments - 1, lastSegmentPointB);
+
+        edgeCollider2D.SetPoints(points);
 
     }
 
@@ -229,7 +240,10 @@ public class TentacleGenerator : MonoBehaviour
         SimulateTentacle();
 
         DrawLine();
+
+        PlaceCollider();
     }
+
 
 
     private void OnDrawGizmos()
