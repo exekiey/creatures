@@ -87,7 +87,7 @@ public class TentacleGenerator : MonoBehaviour
 
         GenerateTentacle();
 
-        segments[0].pointA.locked = true;
+        segments[numberOfSegments-1].pointB.locked = true;
 
     }
 
@@ -131,7 +131,41 @@ public class TentacleGenerator : MonoBehaviour
 
     void SimulateTentacle()
     {
-        
+
+
+        /*
+        Point lastPoint = points.Last();
+
+        if (Input.GetMouseButton(0))
+        {
+            lastPoint.currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            //lastPoint.locked = true;
+        }*/
+
+
+        //lastPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
+
+
+        for (int i = 1; i < points.Count; i++)
+        {
+
+            if (points[i].locked) continue;
+
+            Vector2 previousPointPos = points[i-1].currentPosition;
+            Vector2 currentPointPos = points[i].currentPosition;
+
+            Vector2 segmentOrientation = (previousPointPos - currentPointPos).normalized;
+
+            float distance = Vector2.Distance(previousPointPos, currentPointPos);
+
+            float error = distance - segmentLength;
+
+            points[i].currentPosition += segmentOrientation * error;
+
+
+        }
+
+
         foreach (Point currentPoint in points)
         {
 
@@ -152,32 +186,8 @@ public class TentacleGenerator : MonoBehaviour
 
         }
 
-        Point lastPoint = points.Last();
 
-        if (Input.GetMouseButton(0))
-        {
-            lastPoint.currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            //lastPoint.locked = true;
-        }
-
-
-        //lastPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
-           
-
-        for (int i = 1; i < points.Count; i++)
-        {
-            Vector2 currentPointPos = points[i].currentPosition;
-            Vector2 previousPointPos = points[i-1].currentPosition;
-
-            Vector2 segmentOrientation = (currentPointPos - previousPointPos).normalized;
-
-            float distance = Vector2.Distance(previousPointPos, segmentOrientation);
-
-            float error = distance - segmentLength;
-
-            points[i].currentPosition = segmentOrientation * error;
-        }
-
+        /*
         foreach (Point currentPoint in points)
         {
 
@@ -191,7 +201,7 @@ public class TentacleGenerator : MonoBehaviour
 
             }
 
-        }
+        }*/
     }
 
 
@@ -200,8 +210,6 @@ public class TentacleGenerator : MonoBehaviour
     {
         Vector3[] positions = new Vector3[numberOfSegments + 1];
 
-
-        Debug.Log(positions.Length);
         for (int i = 0; i < numberOfSegments; i++)
         {
 
