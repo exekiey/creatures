@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -9,6 +10,9 @@ public class TentacleGenerator : MonoBehaviour
 {
     public class Point
     {
+
+        static int idCounter;
+        public int id;
 
         public Vector2 currentPosition;
         public Vector2 previousPosition;
@@ -27,31 +31,17 @@ public class TentacleGenerator : MonoBehaviour
 
             this.currentPosition = currentPosition;
             this.previousPosition = previousPosition;
+            id = idCounter++;
+
         }
 
     }
 
-    public struct Segment
-    {
 
-        public Point pointA;
-        public Point pointB;
-
-        public Segment(Point pointA, Point pointB)
-        {
-
-            this.pointA = pointA;
-
-            this.pointB = pointB;
-
-        }
-    }
-
-    [SerializeField] int numberOfSegments;
+    [SerializeField] int numberOfPoints;
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
     [SerializeField] float gravity = 10f;
-    GameObject originObject;
 
     LineRenderer lineRenderer;
     EdgeCollider2D edgeCollider2D;
@@ -62,32 +52,34 @@ public class TentacleGenerator : MonoBehaviour
 
     [SerializeField] float tentacleWidth;
 
-    public List<Segment> segments;
-    List<Point> points;
+    LinkedList<Point> points;
 
+    Point last;
 
     [SerializeField] GameObject segmentPrefab;
 
     [SerializeField] SuckerScript sucker;
+    [SerializeField] private bool followCursor;
 
     // Start is called before the first frame update
     void Awake()
     {
 
         lineRenderer = GetComponent<LineRenderer>();
-        lineRenderer.positionCount = numberOfSegments + 1;
+        lineRenderer.positionCount = numberOfPoints;
 
         edgeCollider2D = GetComponent<EdgeCollider2D>();
 
-        segmentLength = tentacleLength / numberOfSegments;
-        halfSegment = segmentLength / 2;
-        segments = new List<Segment>(numberOfSegments);
+        segmentLength = tentacleLength / (numberOfPoints + 1);
 
-        points = new List<Point>();
+        points = new LinkedList<Point>();
+
+        origin = transform.position;
 
         GenerateTentacle();
 
-        segments.First().pointA.locked = true;
+        points.First().locked = false;
+
 
     }
 
@@ -96,41 +88,33 @@ public class TentacleGenerator : MonoBehaviour
         float firstCenter = origin.x;
 
         Point firstLeftPoint = new Point(new Vector2(firstCenter - halfSegment, origin.y), new Vector2(firstCenter - halfSegment, origin.y));
-        Point firstRightPoint = new Point(new Vector2(firstCenter + halfSegment, origin.y), new Vector2(firstCenter + halfSegment, origin.y));
 
-        points.Add(firstLeftPoint);
+        points.AddLast(firstLeftPoint);
 
-
-        Segment firstSegment = new Segment(firstLeftPoint, firstRightPoint);
-
-        segments.Insert(0, firstSegment);
-        for (int i = 1; i < numberOfSegments; i++)
+        for (int i = 1; i < numberOfPoints; i++)
         {
 
 
             float center = segmentLength * i + origin.x;
 
-            Point leftPoint = segments[i - 1].pointB;
             Point rightPoint = new Point(new Vector2(center + halfSegment, origin.y), new Vector2(center + halfSegment, origin.y));
 
-            points.Add(leftPoint);
+            points.AddLast(rightPoint);
 
-            if (i == numberOfSegments - 1)
+            if (i == numberOfPoints - 1)
             {
-                points.Add(rightPoint);
+                last = rightPoint;
             }
-
-            Segment currentSegment = new Segment(leftPoint, rightPoint);
-
-            segments.Insert(i, currentSegment);
 
         }
 
 
     }
 
-    void SimulateTentacle()
+
+    private void MoveSimulation()
     {
+
 
         foreach (Point currentPoint in points)
         {
@@ -138,57 +122,62 @@ public class TentacleGenerator : MonoBehaviour
             if (!currentPoint.locked)
             {
 
-                Vector2 previousPosition = currentPoint.currentPosition;
+                Vector2 positionBeforeUpdate = currentPoint.currentPosition;
 
                 Vector2 currentVelocity = currentPoint.currentPosition - currentPoint.previousPosition;
 
                 currentPoint.currentPosition += currentVelocity;
 
-                currentPoint.previousPosition = previousPosition;
+                currentPoint.previousPosition = positionBeforeUpdate;
 
                 //currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime;
                 currentPoint.currentPosition += Vector2.down * gravity * Time.deltaTime * Time.deltaTime;
             }
 
         }
+    }
 
-        if (Input.GetMouseButton(0))
+    void DistanceConstraint()
+    {
+
+        LinkedListNode<Point> currentNode = points.First;
+        LinkedListNode<Point> nextNode = currentNode.Next;
+       
+        
+        while (nextNode != null)
         {
-            points.Last().currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 currentPos = currentNode.Value.currentPosition;
+            Vector2 nextPos = nextNode.Value.currentPosition;
+
+            Vector2 segmentOrientation = (nextPos - currentPos).normalized;
+
+            float separation = Vector2.Distance(currentPos, nextPos);
+            float error = separation - segmentLength;
 
 
-        }
+            //Debug.Log($"CurrentPos: {currentPos}, NextPos: {nextPos}, SegmentOrientation: {segmentOrientation}, Separation: {separation}, Error: {error}, FixedCurrent: {fixedCurrent}, FixedNext: {fixedNext}");
+            //Debug.Log(currentNode.Value.id + ":" + separation);
 
-        for (int i = 0; i < distanceCheckIterations; i++)
-        {
-
-            foreach (Segment currentSegment in segments)
+            if (!currentNode.Value.locked)
             {
-
-
-                Vector2 positionA = currentSegment.pointA.currentPosition;
-                Vector2 positionB = currentSegment.pointB.currentPosition;
-
-                Vector2 center = (positionA + positionB) / 2;
-                Vector2 orientation = (positionB - positionA).normalized;
-
-                Vector2 errorVector = orientation * halfSegment;
-
-                if (!currentSegment.pointA.locked)
-                {
-                    currentSegment.pointA.currentPosition = center - errorVector;
-                }
-
-                if (!currentSegment.pointB.locked)
-                {
-                    currentSegment.pointB.currentPosition = center + errorVector;
-                }
-
+                Vector2 fixedCurrent = currentPos + segmentOrientation * (error * 0.5f);
+                currentNode.Value.currentPosition = fixedCurrent;
             }
 
+            if (!nextNode.Value.locked)
+            {
+                Vector2 fixedNext = nextPos - segmentOrientation * (error * 0.5f);
+                nextNode.Value.currentPosition = fixedNext;
+            }
+
+
+            currentNode = nextNode;
+            nextNode = currentNode.Next;
         }
-
-
+        //Debug.Log("----------");
+    }
+    private void Collide()
+    {
         foreach (Point currentPoint in points)
         {
 
@@ -199,33 +188,88 @@ public class TentacleGenerator : MonoBehaviour
 
                 currentPoint.currentPosition = currentPoint.previousPosition;
 
-
             }
 
         }
+    }
+    private void FirstAndLastDistanceConstraint()
+    {
+        Point first = points.First();
+
+        float separation = Vector2.Distance(first.currentPosition, last.currentPosition);
+
+        if (first.locked && separation > tentacleLength)
+        {
+
+            Vector2 orientation = (first.currentPosition - last.currentPosition).normalized;
+
+            float error = separation - tentacleLength;
+
+
+            Vector2 correctionVector = orientation * error;
+
+            last.currentPosition += correctionVector;
+            return;
+        }
+
+        if (last.locked && separation > tentacleLength)
+        {
+
+            Vector2 orientation = (first.currentPosition - last.currentPosition).normalized;
+
+            float error = separation - tentacleLength;
+
+
+            Vector2 correctionVector = orientation * error;
+
+            first.currentPosition -= correctionVector;
+            return;
+
+        }
+
+
+    }
+
+    void SimulateTentacle()
+    {
+        if (Input.GetMouseButton(0))
+        {
+            points.First().currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            points.First().locked = true;
+        } else
+        {
+            points.First().locked = false;
+        }
+
+        MoveSimulation();
+
+        FirstAndLastDistanceConstraint();
+        for (int i = 0; i < distanceCheckIterations; i++)
+        {
+            DistanceConstraint();
+        }
+
+
+        Collide();
     }
 
 
 
     void DrawLine()
     {
-        Vector3[] positions = new Vector3[numberOfSegments + 1];
 
-        for (int i = 0; i < numberOfSegments; i++)
+        Vector3[] linePoints = new Vector3[numberOfPoints];
+
+        int counter = 0;
+
+        foreach (Point currentPoint in points)
         {
 
-            Vector3 currentPosition = segments[i].pointA.currentPosition;
-
-            positions[i] = currentPosition;
-
+            linePoints[counter] = currentPoint.currentPosition;
+            counter++;
         }
 
-
-        Vector3 lastSegmentPointB = segments.Last().pointB.currentPosition;
-
-        positions[numberOfSegments] = lastSegmentPointB;
-
-        lineRenderer.SetPositions(positions);
+        lineRenderer.SetPositions(linePoints);
 
     }
 
@@ -248,11 +292,18 @@ public class TentacleGenerator : MonoBehaviour
             foreach (Point point in points)
             {
 
-                Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot1_pix16_gizmo");
 
+                Handles.Label(point.currentPosition, point.id.ToString());
+                if (point == last)
+                {
+
+                    Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot6_pix16_gizmo");
+                } else
+                {
+                    Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot1_pix16_gizmo");
+                }
             }
 
-            Gizmos.DrawIcon(points.Last().currentPosition, "sv_icon_dot6_pix16_gizmo");
 
         }
 
