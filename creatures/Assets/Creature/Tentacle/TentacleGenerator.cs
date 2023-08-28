@@ -2,9 +2,51 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Transactions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+
+enum ColliderType
+{
+
+    Circle,
+    Box,
+    None,
+
+}
+
+class CollisionInfo
+{
+
+    public int id;
+    public ColliderType type;
+    public Vector2 size;
+    public Vector2 pos;
+    public Vector2 scale;
+    public Matrix4x4 worldToLocal;
+    public Matrix4x4 localToWorld;
+    public int numCollisions;
+    public int[] collidingNodes;
+
+    public CollisionInfo(int maxCollisions)
+    {
+
+        id = -1;
+        type = ColliderType.None;
+        size = Vector2.zero;
+        pos = Vector2.zero;
+        scale = Vector2.zero;
+        worldToLocal = Matrix4x4.zero;
+        localToWorld = Matrix4x4.zero;
+
+        numCollisions = 0;
+        collidingNodes = new int[maxCollisions];
+
+    } 
+
+}
+
 
 public class TentacleGenerator : MonoBehaviour
 {
@@ -42,24 +84,28 @@ public class TentacleGenerator : MonoBehaviour
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
     [SerializeField] float gravity = 10f;
-
+    [SerializeField] private bool followCursor;
+    [SerializeField] float tentacleWidth;
+    
     LineRenderer lineRenderer;
-    EdgeCollider2D edgeCollider2D;
 
     float segmentLength;
     private float halfSegment;
     Vector2 origin;
-
-    [SerializeField] float tentacleWidth;
-
     LinkedList<Point> points;
-
     Point last;
 
-    [SerializeField] GameObject segmentPrefab;
-
     [SerializeField] SuckerScript sucker;
-    [SerializeField] private bool followCursor;
+
+
+    //collision
+    const int maxCollisions = 32;
+    const float collisionRadius = .5f;
+    const int colliderBufferSize = 8;
+
+    int numCollisions;
+    CollisionInfo[] collisionsInfo;
+    Collider2D[] colliderBuffer;
 
     // Start is called before the first frame update
     void Awake()
@@ -67,8 +113,6 @@ public class TentacleGenerator : MonoBehaviour
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = numberOfPoints;
-
-        edgeCollider2D = GetComponent<EdgeCollider2D>();
 
         segmentLength = tentacleLength / (numberOfPoints + 1);
 
@@ -78,12 +122,121 @@ public class TentacleGenerator : MonoBehaviour
 
         GenerateTentacle();
 
+        GenerateCollisionInfo();
+
         points.First().locked = false;
 
         last = points.Last();
 
 
     }
+
+    void GenerateCollisionInfo()
+    {
+
+        collisionsInfo = new CollisionInfo[maxCollisions];
+
+        for (int i = 0; i < collisionsInfo.Length; i++)
+        {
+
+            collisionsInfo = new CollisionInfo[numberOfPoints];
+
+        }
+
+        colliderBuffer = new Collider2D[colliderBufferSize];
+
+    }
+
+    void SnapshotCollision()
+    {
+
+        numCollisions = 0;
+
+        foreach (Point currentPoint in points)
+        {
+
+            int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer);
+
+            //loop through every collider that the current point is colliding with
+            for (int i = 0; i < collisions;i++)
+            {
+
+                Collider2D currentCollider = colliderBuffer[i];
+
+                int id = currentCollider.GetInstanceID();
+
+                int idx = -1;
+
+                //loop through every collision in the frame to check if the current collider has already been stored
+                for (int k  = 0; k < numCollisions; k++)
+                {
+
+                    if (collisionsInfo[k].id == id)
+                    {
+                        //if it was stored, don't store it again
+                        idx = k;
+                        break;
+
+                    }
+
+                }
+
+
+                if (idx > 0)
+                {
+
+                    CollisionInfo currentCollisionInfo = collisionsInfo[numCollisions];
+                    currentCollisionInfo.id = id;
+                    
+                    currentCollisionInfo.worldToLocal = currentCollider.transform.worldToLocalMatrix;
+                    currentCollisionInfo.localToWorld = currentCollider.transform.localToWorldMatrix;
+
+                    currentCollisionInfo.scale.x = currentCollisionInfo.localToWorld.GetColumn(0).magnitude;
+                    currentCollisionInfo.scale.y = currentCollisionInfo.localToWorld.GetColumn(1).magnitude;
+
+                    currentCollisionInfo.pos = currentCollider.transform.position;
+
+                    currentCollisionInfo.numCollisions = 1;
+                    currentCollisionInfo.collidingNodes[0] = i;
+
+
+                    switch (currentCollider)
+                    {
+                        case CircleCollider2D c:
+                            currentCollisionInfo.type = ColliderType.Circle;
+                            currentCollisionInfo.size.x = currentCollisionInfo.size.y = c.radius;
+                            break;
+                        case BoxCollider2D b:
+                            currentCollisionInfo.type = ColliderType.Box;
+                            currentCollisionInfo.size = b.size;
+                            break;
+                        default:
+                            currentCollisionInfo.type = ColliderType.None;
+                            break;
+                    }
+
+                    numCollisions++;
+
+                    if (numCollisions >= maxCollisions)
+                    {
+                        return;
+                    } else
+                    {
+
+                        //CollisionInfo currentCollisionInfo = collisionsInfo[idx];
+
+
+                    }
+
+                }
+
+            }
+
+
+        }
+
+    }
+
 
     void GenerateTentacle()
     {
@@ -230,9 +383,9 @@ public class TentacleGenerator : MonoBehaviour
     {
         if (Input.GetMouseButton(0))
         {
-            //points.First().currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            points.First().currentPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-            points.First().currentPosition = new Vector2(-1, -1);
+            //points.First().currentPosition = new Vector2(-1, -1);
             points.First().locked = true;
         }
         else
@@ -290,7 +443,6 @@ public class TentacleGenerator : MonoBehaviour
 
             foreach (Point point in points)
             {
-
 
                 Handles.Label(point.currentPosition, point.id.ToString());
 
