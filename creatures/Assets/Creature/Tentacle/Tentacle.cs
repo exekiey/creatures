@@ -12,7 +12,8 @@ using UnityEngine.Rendering;
 
 
 
-public class TentacleGenerator : MonoBehaviour
+[RequireComponent(typeof(LineRenderer))]
+public class Tentacle : MonoBehaviour
 {
 
     enum ColliderType
@@ -89,22 +90,18 @@ public class TentacleGenerator : MonoBehaviour
 
     }
 
+    //data
     [SerializeField] int numberOfPoints;
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
     [SerializeField] float gravity = 10f;
-    [SerializeField] private bool followCursor;
-    [SerializeField] float tentacleWidth;
 
     LineRenderer lineRenderer;
 
     float segmentLength;
-    private float halfSegment;
     Vector2 origin;
     Point[] points;
     Point last;
-
-    [SerializeField] SuckerScript sucker;
 
 
     //collision
@@ -116,6 +113,8 @@ public class TentacleGenerator : MonoBehaviour
     CollisionInfo[] collisionInfos;
     Collider2D[] colliderBuffer;
     bool shouldSnapShotCollision;
+
+    public Point[] Points { get => points; set => points = value; }
 
     // Start is called before the first frame update
     void Awake()
@@ -135,6 +134,7 @@ public class TentacleGenerator : MonoBehaviour
         GenerateCollisionInfo();
 
         points.First().locked = false;
+
 
         last = points.Last();
 
@@ -166,7 +166,6 @@ public class TentacleGenerator : MonoBehaviour
 
             int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer);
 
-            Debug.Log(currentPoint.id + ":" + collisions);
 
             //loop through every collider that the current point is colliding with
             for (int i = 0; i < collisions; i++)
@@ -212,10 +211,6 @@ public class TentacleGenerator : MonoBehaviour
                     currentCollisionInfo.numberOfCollidingPoints = 1;
                     currentCollisionInfo.collidingPoints[0] = currentPoint;
 
-                    //Debug.Log(currentCollisionInfo.PrintFirstId());
-
-                    Debug.Log("from snapshot: " + currentCollisionInfo.id + "id: " + currentCollisionInfo.collidingPoints[0].id);
-
                     switch (currentCollider)
                     {
                         case CircleCollider2D circle:
@@ -260,15 +255,11 @@ public class TentacleGenerator : MonoBehaviour
         }
 
         shouldSnapShotCollision = false;
-
-
-        Debug.Log("......");
     }
 
 
     void AdjustCollisions()
     {
-
 
         for (int i = 0; i < numCollisions; i++)
         {
@@ -312,8 +303,10 @@ public class TentacleGenerator : MonoBehaviour
 
                         Point currentPoint = currentCollisionInfo.collidingPoints[j];
 
-                        Vector2 pointInLocal = currentCollisionInfo.localToWorld.MultiplyPoint(currentPoint.currentPosition);
+                        Vector2 pointInLocal = currentCollisionInfo.worldToLocal.MultiplyPoint(currentPoint.currentPosition);
 
+                        Debug.Log(pointInLocal);
+                        
                         Vector2 halfSize = currentCollisionInfo.size / 2;
                         Vector2 scalar = currentCollisionInfo.scale;
 
@@ -326,12 +319,12 @@ public class TentacleGenerator : MonoBehaviour
 
                         float absouluteCollisionPointY = halfSize.y - Mathf.Abs(pointInLocal.y);
 
-                        if (absouluteCollisionPointX <= 0)
+                        if (absouluteCollisionPointY <= 0)
                         {
                             continue;
                         }
 
-                        if (absouluteCollisionPointX * scalar.x < absouluteCollisionPointY * scalar.x)
+                        if (absouluteCollisionPointX * scalar.x < absouluteCollisionPointY * scalar.y)
                         {
 
                             float collisionDirection = Mathf.Sign(pointInLocal.x);
@@ -340,14 +333,14 @@ public class TentacleGenerator : MonoBehaviour
                         else
                         {
                             float collisionDirection = Mathf.Sign(pointInLocal.y);
-                            pointInLocal.x = halfSize.x * collisionDirection;
+                            pointInLocal.y = halfSize.y * collisionDirection;
                         }
 
                         Vector2 hitPos = currentCollisionInfo.localToWorld.MultiplyPoint(pointInLocal);
 
                         currentPoint.currentPosition = hitPos;
 
-
+                        
                     }
                     break;
             }
@@ -482,13 +475,33 @@ public class TentacleGenerator : MonoBehaviour
 
 
     }
-
+    /*
     void AttachToBody()
     {
+        try
+        {
 
+            points[0].currentPosition = body.transform.position;
 
+        } catch (UnassignedReferenceException)
+        {
+            Debug.LogWarning("No body!");
+        }
 
     }
+
+    void AttachToSucker()
+    {
+        try
+        {
+
+            points.Last().currentPosition = sucker.transform.position;
+        }
+        catch (UnassignedReferenceException)
+        {
+            Debug.LogWarning("No scuker!");
+        }
+    }*/
 
     void SimulateTentacle()
     {
@@ -498,10 +511,8 @@ public class TentacleGenerator : MonoBehaviour
             SnapshotCollision();
         }
 
-        AttachToBody();
-
         MoveSimulation();
-        //FirstAndLastDistanceConstraint();
+        FirstAndLastDistanceConstraint();
         AdjustCollisions();
         for (int i = 0; i < distanceCheckIterations; i++)
         {

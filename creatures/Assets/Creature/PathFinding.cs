@@ -10,6 +10,7 @@ public class PathFinding : MonoBehaviour
 {
 
     Vector2 destination;
+    Vector2 origin;
 
     Cell originCell;
     Cell destinationCell;
@@ -21,6 +22,9 @@ public class PathFinding : MonoBehaviour
 
     public LinkedList<Cell> CellPath { get => cellPath;}
     public Vector2 Destination { set => destination = value; }
+    public Vector2 Origin { set => origin = value; }
+
+    Cell[] cellPathArray;
 
     class Node
     {
@@ -164,7 +168,8 @@ public class PathFinding : MonoBehaviour
 
 
         visitedNodes = new List<Node>();
-        originCell = GridScript.GetCellCoords(transform.position);
+
+        originCell = GridScript.GetCellCoords(origin);
 
         destinationCell = GridScript.GetCellCoords(destination);
 
@@ -176,6 +181,10 @@ public class PathFinding : MonoBehaviour
         LinkedList<Node> path = APathFinding();
 
         cellPath = GetCellsFromNodes(path);
+
+        cellPathArray = new Cell[cellPath.Count];
+
+        cellPath.CopyTo(cellPathArray, 0);
 
         return cellPath;
 
@@ -246,6 +255,8 @@ public class PathFinding : MonoBehaviour
             currentNode = bestNeighbour;
         }
 
+        visitedNodes.Add(currentNode);
+
         return currentNode.Path;
 
     }
@@ -269,10 +280,10 @@ public class PathFinding : MonoBehaviour
     }
 
 
-    void DrawPath(LinkedList<Cell> path)
+    void DrawPath(Cell[] path)
     {
 
-        for (int i = 0; i < path.Count - 1; i++)
+        for (int i = 0; i < path.Length - 1; i++)
         {
 
             Vector2 from = GridScript.GetRealWorldCoords(path.ElementAt(i));
@@ -288,7 +299,7 @@ public class PathFinding : MonoBehaviour
     {
         if (cellPath != null)
         {
-        DrawPath(cellPath);
+            DrawPath(cellPathArray);
 
         }
 
