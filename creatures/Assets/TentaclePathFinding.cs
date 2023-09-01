@@ -69,7 +69,12 @@ public class TentaclePathFinding : MonoBehaviour
 
         Vector2 direction = (targetPosition - tentacle.Points.Last().currentPosition).normalized;
 
-        tentacle.Points.Last().currentPosition += direction * moveForce;
+
+        if (tentacle.CurrentTotalDistance < tentacle.TentacleLength + 0.1f)
+        {
+            tentacle.Points.Last().currentPosition += direction * moveForce;
+        }
+
 
     }
 }

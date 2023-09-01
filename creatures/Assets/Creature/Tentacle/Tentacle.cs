@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Transactions;
+using Unity.Profiling;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -113,8 +114,11 @@ public class Tentacle : MonoBehaviour
     CollisionInfo[] collisionInfos;
     Collider2D[] colliderBuffer;
     bool shouldSnapShotCollision;
+    float currentTotalLength;
 
     public Point[] Points { get => points; set => points = value; }
+    public float CurrentTotalDistance { get => currentTotalLength; }
+    public float TentacleLength { get => tentacleLength; }
 
     // Start is called before the first frame update
     void Awake()
@@ -304,8 +308,6 @@ public class Tentacle : MonoBehaviour
                         Point currentPoint = currentCollisionInfo.collidingPoints[j];
 
                         Vector2 pointInLocal = currentCollisionInfo.worldToLocal.MultiplyPoint(currentPoint.currentPosition);
-
-                        Debug.Log(pointInLocal);
                         
                         Vector2 halfSize = currentCollisionInfo.size / 2;
                         Vector2 scalar = currentCollisionInfo.scale;
@@ -428,6 +430,7 @@ public class Tentacle : MonoBehaviour
                 points[i + 1].currentPosition = fixedNext;
             }
 
+            currentTotalLength += separation;
 
         }
 
@@ -514,11 +517,13 @@ public class Tentacle : MonoBehaviour
         MoveSimulation();
         FirstAndLastDistanceConstraint();
         AdjustCollisions();
+
+        currentTotalLength = 0;
         for (int i = 0; i < distanceCheckIterations; i++)
         {
             DistanceConstraint();
         }
-
+        currentTotalLength = currentTotalLength / distanceCheckIterations;
 
     }
 

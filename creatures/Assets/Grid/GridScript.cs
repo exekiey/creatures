@@ -65,7 +65,7 @@ public class GridScript : MonoBehaviour
     {
 
         Vector2 cellCentre = GetRealWorldCoords(cell);
-        Collider2D collider2D = Physics2D.OverlapCircle(cellCentre, 0.1f);
+        Collider2D collider2D = Physics2D.OverlapPoint(cellCentre);
 
         return collider2D != null;
 

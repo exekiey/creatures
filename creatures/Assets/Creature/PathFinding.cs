@@ -87,7 +87,7 @@ public class PathFinding : MonoBehaviour
                     path.AddFirst(currentNode);
                     currentNode = currentNode._parent;
 
-                    Debug.Log(currentNode.X + ":" + currentNode.Y); 
+                    //Debug.Log(currentNode.X + ":" + currentNode.Y); 
 
                 }
 

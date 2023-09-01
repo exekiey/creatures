@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Tentacle))]
-public class AttachBody : MonoBehaviour
+public class TentacleAttachBody : MonoBehaviour
 {
 
     [SerializeField] GameObject attachedObject;
