@@ -4,7 +4,6 @@ using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(Tentacle))]
-[RequireComponent(typeof(PathFinding))]
 public class TentaclePathFinding : MonoBehaviour
 {
 
@@ -26,29 +25,43 @@ public class TentaclePathFinding : MonoBehaviour
     {
         tentacle = GetComponent<Tentacle>();
 
-        pathFinding = GetComponent<PathFinding>();
+        pathFinding = new PathFinding();
 
         targetPosition = target.transform.position;
-
-
-
-
 
     }
 
     private void Start()
     {
 
-        pathFinding.Origin = tentacle.Points.Last().currentPosition;
-        pathFinding.Destination = targetPosition;
+        cellPath = pathFinding.GetPath(tentacle.Points.Last().currentPosition, targetPosition);
 
-        cellPath = pathFinding.GetPath();
-
+        /*
+        foreach(Cell cell in cellPath)
+        {
+            Debug.Log(cell.x + " " + cell.y);
+        }
+        */
         nextCell = cellPath.First();
 
         cellPath.RemoveFirst();
 
         tentacle.Points.Last().locked = true;
+    }
+
+    void DrawPath()
+    {
+
+        for (int i = 0; i < pathFinding.cellPathArray.Length - 1; i++)
+        {
+
+            Vector2 from = GridScript.GetRealWorldCoords(pathFinding.cellPathArray.ElementAt(i));
+            Vector2 to = GridScript.GetRealWorldCoords(pathFinding.cellPathArray.ElementAt(i + 1));
+
+            Debug.DrawLine(from, to);
+
+        }
+
     }
 
     // Update is called once per frame
@@ -66,6 +79,9 @@ public class TentaclePathFinding : MonoBehaviour
 
             }
         }
+
+        DrawPath();
+
 
         Vector2 direction = (targetPosition - tentacle.Points.Last().currentPosition).normalized;
 

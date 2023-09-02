@@ -10,6 +10,15 @@ public struct Cell
     public int x;
     public int y;
 
+
+    public Cell(int x, int y)
+    {
+
+        this.x = x;
+        this.y = y;
+
+    }
+
     public override bool Equals(object obj)
     {
         if (obj is Cell otherCell)
@@ -45,6 +54,14 @@ public class GridScript : MonoBehaviour
     public void Awake()
     {
         instance = this;
+
+        GameObject gameObject = new GameObject();
+
+    }
+
+    private void Start()
+    {
+        PathFinding.SetObstacleNodes();
     }
 
     public static Cell GetCellCoords(Vector2 position)
@@ -60,6 +77,23 @@ public class GridScript : MonoBehaviour
         return new Vector2((position.x * instance.gridSize) + instance.gridSize / 2, (position.y * instance.gridSize) + instance.gridSize / 2);
 
     }
+
+    public static Vector2 GetRealWorldCoords(Vector2 position)
+    {
+
+        return new Vector2((position.x * instance.gridSize) + instance.gridSize / 2, (position.y * instance.gridSize) + instance.gridSize / 2);
+
+    }
+
+    public static bool IsCellOccupied(Vector2 cell)
+    {
+
+        Vector2 cellCentre = GetRealWorldCoords(cell);
+        Collider2D collider2D = Physics2D.OverlapPoint(cellCentre);
+
+        return collider2D != null;
+
+    } 
     
     public static bool IsCellOccupied(Cell cell)
     {
@@ -70,53 +104,6 @@ public class GridScript : MonoBehaviour
         return collider2D != null;
 
     }
-
-
-    public static List<Cell> FilterNeighbors(params Cell[] args)
-    {
-
-        List<Cell> neighbors = new List<Cell>();
-
-        foreach (Cell cell in args)
-        {
-
-            if (!IsCellOccupied(cell))
-            {
-                neighbors.Add(cell);
-            }
-
-        }
-
-        return neighbors;
-
-    }
-
-    public static List<Cell> GetNeighborCells(Cell cell)
-    {
-
-
-
-        Cell up = new Cell { x = cell.x, y = cell.y + 1} ;
-
-        Cell upLeft = new Cell { x = cell.x - 1, y = cell.y + 1 };
-
-        Cell upRight = new Cell { x = cell.x + 1, y = cell.y + 1 };
-
-        Cell down = new Cell { x = cell.x, y = cell.y - 1} ;
-        Cell downLeft = new Cell { x = cell.x - 1, y = cell.y - 1 };
-        Cell downRight = new Cell { x = cell.x + 1, y = cell.y - 1 };
-
-        Cell left = new Cell { x = cell.x - 1, y = cell.y};
-        Cell right = new Cell { x = cell.x + 1, y = cell.y};
-
-
-        List<Cell> neighbors = FilterNeighbors(up, upLeft, upRight, down, downLeft, downRight, left, right);
-
-        return neighbors;
-
-    }
-
-
     
     private void OnDrawGizmos()
     {

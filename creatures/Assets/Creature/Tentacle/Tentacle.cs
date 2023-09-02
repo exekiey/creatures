@@ -478,33 +478,6 @@ public class Tentacle : MonoBehaviour
 
 
     }
-    /*
-    void AttachToBody()
-    {
-        try
-        {
-
-            points[0].currentPosition = body.transform.position;
-
-        } catch (UnassignedReferenceException)
-        {
-            Debug.LogWarning("No body!");
-        }
-
-    }
-
-    void AttachToSucker()
-    {
-        try
-        {
-
-            points.Last().currentPosition = sucker.transform.position;
-        }
-        catch (UnassignedReferenceException)
-        {
-            Debug.LogWarning("No scuker!");
-        }
-    }*/
 
     void SimulateTentacle()
     {

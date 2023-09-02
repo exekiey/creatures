@@ -37,9 +37,7 @@ public class SeekingScript : MonoBehaviour
 
             usePathFinding = true;
 
-            _pathFinding.Destination = targetPosition;
-
-            cellPath = _pathFinding.GetPath();
+            cellPath = _pathFinding.GetPath(transform.position, targetPosition);
 
             nextCell = cellPath.First();
             

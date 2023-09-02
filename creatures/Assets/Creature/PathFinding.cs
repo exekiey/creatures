@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,8 +6,7 @@ using UnityEngine;
 
 
 
-
-public class PathFinding : MonoBehaviour
+public class PathFinding
 {
 
     Vector2 destination;
@@ -18,13 +18,17 @@ public class PathFinding : MonoBehaviour
     Node originNode;
 
     List<Node> visitedNodes;
+    HashSet<Node> waitingNodes;
+
     private LinkedList<Cell> cellPath;
 
     public LinkedList<Cell> CellPath { get => cellPath;}
     public Vector2 Destination { set => destination = value; }
     public Vector2 Origin { set => origin = value; }
 
-    Cell[] cellPathArray;
+    public Cell[] cellPathArray;
+
+    static Node[] obstacleNodes;
 
     class Node
     {
@@ -151,6 +155,26 @@ public class PathFinding : MonoBehaviour
 
         }
 
+        public override bool Equals(object? obj)
+        {
+            if (obj is Node other)
+            {
+
+                return X == other.X && Y == other.Y;
+
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            int numberOfZeroes = (int)Mathf.Log10(Y) + 1;
+
+            int res = X * (int)Mathf.Pow((float)10, (float)numberOfZeroes) + Y;
+
+            return res;
+        }
+
         public bool IsDestination { get => _x == destination.Item1 && _y == destination.Item2; }
 
         float Weight { get => _distanceFromOrigin + _distanceToDestination; }
@@ -158,25 +182,77 @@ public class PathFinding : MonoBehaviour
         public int Y { get => _y;}
     }
 
-    // Start is called before the first frame update
-    void Awake()
+    public static void SetObstacleNodes()
     {
+
+        float cameraHeight = -Camera.main.orthographicSize;
+
+        float cameraWidth = cameraHeight * Camera.main.aspect;
+
+        Cell firstCell = GridScript.GetCellCoords(new Vector2(cameraWidth, cameraHeight));
+
+        int numberOfHorizontalCells = Mathf.Abs(firstCell.x * 2);
+        int numberOfVerticalCells = Mathf.Abs(firstCell.y * 2);
+
+        obstacleNodes = new Node[numberOfHorizontalCells * numberOfVerticalCells];
+
+        Debug.Log(obstacleNodes.Count());
+
+        int leftSide = firstCell.x;
+        int rightSide = Mathf.Abs(firstCell.x) - 1;
+
+        int lowerSide = firstCell.y;
+        int upperSide = Mathf.Abs(firstCell.y) - 1;
+
+        for (int i = leftSide; i < rightSide; i++)
+        {
+
+            for (int j = lowerSide; j < upperSide; j++)
+            {
+                Cell newCell = new Cell(i, j);
+
+                int currentIndex = (Mathf.Abs(leftSide) + i) * numberOfHorizontalCells + (Mathf.Abs(lowerSide) + j);
+
+                Debug.Log(Mathf.Abs(leftSide) + i);
+               
+                if (GridScript.IsCellOccupied(newCell))
+                {
+                    obstacleNodes[currentIndex] = new Node(i, j);
+                }
+
+            }
+
+        }
+
+        foreach(Node node in obstacleNodes)
+        {
+
+            if (node != null)
+            {
+
+                Debug.Log(node.ToString());
+
+            }
+
+        }
+
     }
 
-    public LinkedList<Cell> GetPath()
+    public LinkedList<Cell> GetPath(Vector2 from, Vector2 to)
     {
 
 
         visitedNodes = new List<Node>();
 
-        originCell = GridScript.GetCellCoords(origin);
+        originCell = GridScript.GetCellCoords(from);
 
-        destinationCell = GridScript.GetCellCoords(destination);
+        destinationCell = GridScript.GetCellCoords(to);
 
         Node.Destination = (destinationCell.x, destinationCell.y);
         originNode = new Node(originCell.x, originCell.y);
 
         visitedNodes = new List<Node>();
+        waitingNodes = new HashSet<Node>();
 
         LinkedList<Node> path = APathFinding();
 
@@ -185,53 +261,28 @@ public class PathFinding : MonoBehaviour
         cellPathArray = new Cell[cellPath.Count];
 
         cellPath.CopyTo(cellPathArray, 0);
-
+        
         return cellPath;
 
     }
 
-    List<Node> PruneNodes(List<Node> nodes)
+    Node GetBestNode()
     {
 
 
+        Node bestNode = waitingNodes.First();
 
-        List<Node> prunedNodes = new List<Node>();
-
-        foreach (Node currentNode in nodes)
+        foreach(Node currentNode in waitingNodes)
         {
 
-
-            if (visitedNodes.Contains(currentNode)) continue;
-
-            Cell currentCell = new Cell { x = currentNode.X, y = currentNode.Y };
-
-            if (GridScript.IsCellOccupied(currentCell)) continue;
-
-            prunedNodes.Add(currentNode);
-
-        }
-
-        return prunedNodes;
-
-    }
-
-    Node GetSmallestNode(List<Node> neighbours)
-    {
-
-
-        Node smallestNode = neighbours[0];
-
-        foreach(Node currentNode in neighbours)
-        {
-
-            if (smallestNode > currentNode)
+            if (bestNode > currentNode)
             {
-                smallestNode = currentNode;
+                bestNode = currentNode;
             }
 
         }
 
-        return smallestNode;
+        return bestNode;
 
     }
 
@@ -243,16 +294,22 @@ public class PathFinding : MonoBehaviour
 
         while (!currentNode.IsDestination)
         {
-
             visitedNodes.Add(currentNode);
+            waitingNodes.Remove(currentNode);
 
             List<Node> neighbours = currentNode.Neighbours;
 
-            List<Node> prunedNeighbours = PruneNodes(neighbours);
 
-            Node bestNeighbour = GetSmallestNode(prunedNeighbours);
+            foreach (Node currentBestNode in neighbours)
+            {
 
-            currentNode = bestNeighbour;
+                if (obstacleNodes.Contains(currentBestNode)) continue;
+
+                waitingNodes.Add(currentBestNode);
+
+            }
+
+            currentNode = GetBestNode();
         }
 
         visitedNodes.Add(currentNode);
@@ -269,7 +326,6 @@ public class PathFinding : MonoBehaviour
 
         foreach (Node currentNode in nodes)
         {
-            //Debug.Log(currentNode.ToString());
             cells.AddLast(new Cell { x = currentNode.X, y = currentNode.Y });
 
         }
@@ -280,28 +336,9 @@ public class PathFinding : MonoBehaviour
     }
 
 
-    void DrawPath(Cell[] path)
+    public void DrawPath()
     {
 
-        for (int i = 0; i < path.Length - 1; i++)
-        {
-
-            Vector2 from = GridScript.GetRealWorldCoords(path.ElementAt(i));
-            Vector2 to = GridScript.GetRealWorldCoords(path.ElementAt(i+1));
-
-            Debug.DrawLine(from, to);
-
-        }
-
-    }
-
-    private void Update()
-    {
-        if (cellPath != null)
-        {
-            DrawPath(cellPathArray);
-
-        }
 
     }
 }

@@ -16,8 +16,6 @@ public class TentacleAttachBody : MonoBehaviour
     {
         attachedBody = attachedObject.GetComponent<Rigidbody2D>();
         tentacle = GetComponent<Tentacle>();
-
-
     }
 
     private void Start()
