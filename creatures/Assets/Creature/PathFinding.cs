@@ -194,27 +194,40 @@ public class PathFinding
         int numberOfHorizontalCells = Mathf.Abs(firstCell.x * 2);
         int numberOfVerticalCells = Mathf.Abs(firstCell.y * 2);
 
-        obstacleNodes = new Node[numberOfHorizontalCells * numberOfVerticalCells];
 
-        Debug.Log(obstacleNodes.Count());
+        obstacleNodes = new Node[numberOfHorizontalCells * numberOfVerticalCells];
 
         int leftSide = firstCell.x;
         int rightSide = Mathf.Abs(firstCell.x) - 1;
 
+
         int lowerSide = firstCell.y;
         int upperSide = Mathf.Abs(firstCell.y) - 1;
 
+        Debug.Log(obstacleNodes.Count());
+
+        
         for (int i = leftSide; i < rightSide; i++)
         {
 
+
+            int fixedHorizontalIndex = Mathf.Abs(leftSide) + i;
+
+            Debug.Log(fixedHorizontalIndex + "-");
+
+            fixedHorizontalIndex *= numberOfVerticalCells;
+
+            
             for (int j = lowerSide; j < upperSide; j++)
             {
                 Cell newCell = new Cell(i, j);
 
-                int currentIndex = (Mathf.Abs(leftSide) + i) * numberOfHorizontalCells + (Mathf.Abs(lowerSide) + j);
+                int fixedVerticalIndex = Mathf.Abs(lowerSide) + j;
 
-                Debug.Log(Mathf.Abs(leftSide) + i);
-               
+                int currentIndex = fixedHorizontalIndex + fixedVerticalIndex;
+
+                Debug.Log(currentIndex);
+                
                 if (GridScript.IsCellOccupied(newCell))
                 {
                     obstacleNodes[currentIndex] = new Node(i, j);
@@ -222,8 +235,9 @@ public class PathFinding
 
             }
 
-        }
 
+        }
+        /*
         foreach(Node node in obstacleNodes)
         {
 
@@ -234,7 +248,7 @@ public class PathFinding
 
             }
 
-        }
+        }*/
 
     }
 
