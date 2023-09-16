@@ -1,21 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Test : MonoBehaviour
 {
 
-    Rigidbody2D rigidbody2D;
+    [SerializeField] GameObject test;
 
-    // Start is called before the first frame update
+    [SerializeField] GameObject target;
+    PathFinding pathFinding;
+    LinkedList<Cell> cellPath;
+
+    Cell[] cellPathArray;
+
     void Start()
     {
-        rigidbody2D = GetComponent<Rigidbody2D>();
+        pathFinding = new PathFinding(PathFinding.Types.SpatialAware, test.transform.lossyScale);
+
+        cellPath = pathFinding.GetPath(test.transform.position, target.transform.position);
+
+        Debug.Log(cellPath.Count);
+
+        cellPathArray = cellPath.ToArray();
+
     }
 
-    // Update is called once per frame
-    void FixedUpdate()
+    private void Update()
     {
-        rigidbody2D.AddForce(new Vector2(1, 0));
+        DrawPath();
+    }
+
+    void DrawPath()
+    {
+
+
+        for (int i = 0; i < pathFinding.cellPathArray.Length - 1; i++)
+        {
+            Vector2 from = GridScript.GetRealWorldCoords(pathFinding.cellPathArray.ElementAt(i));
+            Vector2 to = GridScript.GetRealWorldCoords(pathFinding.cellPathArray.ElementAt(i + 1));
+
+            Debug.DrawLine(from, to, Color.red);
+
+        }
+
     }
 }

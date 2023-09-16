@@ -37,6 +37,12 @@ public struct Cell
         return !left.Equals(right);
     }
 
+    public string ToString()
+    {
+
+        return $"Cell ({x}, {y})";
+    }
+
 }
 
 
@@ -50,18 +56,17 @@ public class GridScript : MonoBehaviour
     static GridScript instance;
 
     public static float GridSize { get => instance.gridSize; }
+    public float GridSize1 { get => gridSize; set => gridSize = value; }
+
+    [SerializeField] GameObject test;
 
     public void Awake()
     {
+
         instance = this;
 
-        GameObject gameObject = new GameObject();
-
-    }
-
-    private void Start()
-    {
         PathFinding.SetObstacleNodes();
+
     }
 
     public static Cell GetCellCoords(Vector2 position)
@@ -99,9 +104,21 @@ public class GridScript : MonoBehaviour
     {
 
         Vector2 cellCentre = GetRealWorldCoords(cell);
-        Collider2D collider2D = Physics2D.OverlapPoint(cellCentre);
+        Collider2D collider2D = Physics2D.OverlapPoint(cellCentre, LayerMask.GetMask("obstacle"));
 
         return collider2D != null;
+
+    }
+
+    public static Vector2 GetSizeInCells(Vector2 size)
+    {
+
+
+        float error = 0.01f;
+
+        size -= Vector2.one * error;
+
+        return new Vector2(Mathf.Ceil(size.x / GridSize), Mathf.Ceil(size.y / GridSize));
 
     }
     
@@ -110,7 +127,11 @@ public class GridScript : MonoBehaviour
         float cameraHeight = Camera.main.orthographicSize;
 
         float cameraWidth = cameraHeight * Camera.main.aspect;
-        
+
+        if (drawGrid)
+        {
+
+
         if (gridSize > 0)
         {
 
@@ -143,6 +164,7 @@ public class GridScript : MonoBehaviour
             }
 
 
+            }
         }
         /*
         Gizmos.color = new Color(1, 1, 1, 0.1f);

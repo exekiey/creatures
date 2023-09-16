@@ -96,6 +96,10 @@ public class Tentacle : MonoBehaviour
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
     [SerializeField] float gravity = 10f;
+    [SerializeField] float loseness;
+    [SerializeField] float generationDistance;
+
+    [SerializeField] bool _isColliding;
 
     LineRenderer lineRenderer;
 
@@ -103,6 +107,7 @@ public class Tentacle : MonoBehaviour
     Vector2 origin;
     Point[] points;
     Point last;
+    [SerializeField] float currentTotalLength;
 
 
     //collision
@@ -114,11 +119,14 @@ public class Tentacle : MonoBehaviour
     CollisionInfo[] collisionInfos;
     Collider2D[] colliderBuffer;
     bool shouldSnapShotCollision;
-    float currentTotalLength;
+    private float separation;
 
     public Point[] Points { get => points; set => points = value; }
-    public float CurrentTotalDistance { get => currentTotalLength; }
+    public float CurrentTotalLength { get => currentTotalLength; }
     public float TentacleLength { get => tentacleLength; }
+    public float Loseness { get => loseness; set => loseness = value; }
+    public bool IsColliding { get => _isColliding;  }
+    public float Separation { get => separation; }
 
     // Start is called before the first frame update
     void Awake()
@@ -141,6 +149,7 @@ public class Tentacle : MonoBehaviour
 
 
         last = points.Last();
+
 
 
     }
@@ -265,6 +274,8 @@ public class Tentacle : MonoBehaviour
     void AdjustCollisions()
     {
 
+        bool isAnyColliding = false;
+
         for (int i = 0; i < numCollisions; i++)
         {
 
@@ -291,6 +302,8 @@ public class Tentacle : MonoBehaviour
                         {
                             continue;
                         }
+
+                        isAnyColliding = true;
 
                         Vector2 collisionDirection = (currentPoint.currentPosition - currentCollisionInfo.pos).normalized;
                         Vector2 hitPos = currentCollisionInfo.pos + collisionDirection * radius;
@@ -326,6 +339,8 @@ public class Tentacle : MonoBehaviour
                             continue;
                         }
 
+                        isAnyColliding = true;
+
                         if (absouluteCollisionPointX * scalar.x < absouluteCollisionPointY * scalar.y)
                         {
 
@@ -349,10 +364,15 @@ public class Tentacle : MonoBehaviour
 
         }
 
+        _isColliding = isAnyColliding;
+
     }
 
     void GenerateTentacle()
     {
+
+        float startingSegmentLength = generationDistance / numberOfPoints;
+
         float firstCenter = origin.x;
 
         Point firstLeftPoint = new Point(new Vector2(firstCenter, origin.y), new Vector2(firstCenter, origin.y));
@@ -363,7 +383,7 @@ public class Tentacle : MonoBehaviour
         {
 
 
-            float center = segmentLength * i + origin.x;
+            float center = startingSegmentLength * i + origin.x;
 
             Point rightPoint = new Point(new Vector2(center, origin.y), new Vector2(center, origin.y));
 
@@ -400,7 +420,7 @@ public class Tentacle : MonoBehaviour
         }
     }
 
-    void DistanceConstraint()
+    void DistanceConstraint(bool isLast)
     {
 
         for (int i = 0; i < numberOfPoints - 1; i++)
@@ -430,7 +450,12 @@ public class Tentacle : MonoBehaviour
                 points[i + 1].currentPosition = fixedNext;
             }
 
-            currentTotalLength += separation;
+            if (isLast)
+            {
+
+                currentTotalLength += separation;
+            }
+
 
         }
 
@@ -448,9 +473,9 @@ public class Tentacle : MonoBehaviour
 
         Point first = points.First();
 
+        separation = Vector2.Distance(first.currentPosition, last.currentPosition);
+        
         if (first.locked && last.locked) return;
-
-        float separation = Vector2.Distance(first.currentPosition, last.currentPosition);
 
         if (separation < tentacleLength) return;
 
@@ -461,13 +486,14 @@ public class Tentacle : MonoBehaviour
         Vector2 correctionVector = orientation * error;
 
 
-        if (first.locked && separation > tentacleLength)
+
+        if (first.locked && separation + loseness > tentacleLength)
         {
             last.currentPosition += correctionVector;
             return;
         }
 
-        if (last.locked && separation > tentacleLength)
+        if (last.locked && separation + loseness> tentacleLength)
         {
             first.currentPosition -= correctionVector;
             return;
@@ -481,7 +507,7 @@ public class Tentacle : MonoBehaviour
 
     void SimulateTentacle()
     {
-
+        
         if (shouldSnapShotCollision)
         {
             SnapshotCollision();
@@ -489,14 +515,14 @@ public class Tentacle : MonoBehaviour
 
         MoveSimulation();
         FirstAndLastDistanceConstraint();
-        AdjustCollisions();
 
         currentTotalLength = 0;
+        
         for (int i = 0; i < distanceCheckIterations; i++)
         {
-            DistanceConstraint();
+            AdjustCollisions();
+            DistanceConstraint(i == distanceCheckIterations - 1);
         }
-        currentTotalLength = currentTotalLength / distanceCheckIterations;
 
     }
 
@@ -526,6 +552,7 @@ public class Tentacle : MonoBehaviour
         SimulateTentacle();
 
         DrawLine();
+
     }
 
 
@@ -547,7 +574,7 @@ public class Tentacle : MonoBehaviour
                     continue;
                 }
 
-                if (point == last)
+                if (point == points.Last())
                 {
                     Gizmos.DrawIcon(point.currentPosition, "sv_icon_dot3_pix16_gizmo");
                 }
@@ -558,11 +585,23 @@ public class Tentacle : MonoBehaviour
 
                 Gizmos.color = new Color(0, 1, 0, 0.5f);
 
-                Gizmos.DrawSphere(point.currentPosition, collisionRadius);
+                //Gizmos.DrawSphere(point.currentPosition, collisionRadius);
             }
+
+            GUIStyle style = new GUIStyle();
+            style.normal.textColor = Color.red;
+
+            Handles.Label(points.Last().currentPosition + Vector2.left * 0.5f, currentTotalLength.ToString(), style);
+
 
 
         }
+
+
+
+#if (UNITY_EDITOR)
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.right * generationDistance);
+        #endif
 
     }
 }

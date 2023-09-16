@@ -20,7 +20,7 @@ public class PositionSquare : MonoBehaviour
     [SerializeField] bool useObjectPosition;
 
     public Vector2 RealPosition { set => realPosition = value; }
-
+    public Color Color { get => color; set => color = value; }
 
     private void Awake()
     {
@@ -46,15 +46,7 @@ public class PositionSquare : MonoBehaviour
 
         positionSquare.transform.position = GridScript.GetRealWorldCoords(currentCell);
 
-        if (GridScript.IsCellOccupied(currentCell))
-        {
-
-            positionSquare.GetComponent<SpriteRenderer>().color = Color.red;
-
-        } else
-        {
-            positionSquare.GetComponent<SpriteRenderer>().color = Color.red;
-        }
+        positionSquare.GetComponent<SpriteRenderer>().color = color;
     }
 
 
