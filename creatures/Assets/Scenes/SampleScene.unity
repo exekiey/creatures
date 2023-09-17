@@ -299,6 +299,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023843}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 
       objectReference: {fileID: 524257728}
@@ -776,6 +780,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023838}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 
       objectReference: {fileID: 524257728}
@@ -875,8 +883,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 866009349}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: 0.5, z: 0}
-  m_LocalScale: {x: 3.9998, y: 1, z: 1}
+  m_LocalPosition: {x: -5, y: 0.5, z: 0}
+  m_LocalScale: {x: 9.9999, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 5
@@ -1133,6 +1141,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023838}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 
@@ -1504,6 +1516,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: gravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: loseness
       value: 1
       objectReference: {fileID: 0}
@@ -1513,7 +1529,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: tentacleLength
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: generationDistance
@@ -1529,15 +1545,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736694, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023843}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 
       objectReference: {fileID: 524257728}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: moveForce
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: creatureSeeking
@@ -1601,6 +1621,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: gravity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: loseness
       value: 1
       objectReference: {fileID: 0}
@@ -1610,7 +1634,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: tentacleLength
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736689, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: generationDistance
@@ -1630,15 +1654,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736694, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023843}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 
       objectReference: {fileID: 524257728}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: moveForce
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: creatureSeeking
@@ -1659,13 +1687,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1497706830}
+  - component: {fileID: 1497706831}
   m_Layer: 0
   m_Name: tentacles
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1497706830
 Transform:
   m_ObjectHideFlags: 0
@@ -1686,6 +1715,19 @@ Transform:
   m_Father: {fileID: 1531023841}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1497706831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1497706829}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74f6c0a3fea332c448a9d9255b350afa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  body: {fileID: 1531023843}
 --- !u!1 &1531023838
 GameObject:
   m_ObjectHideFlags: 0
@@ -1719,9 +1761,9 @@ Rigidbody2D:
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
   m_Mass: 1
-  m_LinearDrag: 1
+  m_LinearDrag: 10
   m_AngularDrag: 0.05
-  m_GravityScale: 0
+  m_GravityScale: 1
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
@@ -1871,7 +1913,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetPosition: {x: 0, y: 0}
-  moveForce: 1
+  moveForce: 50
   followCursor: 0
   tarjetObject: {fileID: 524257728}
   usePathFinding: 1
@@ -2239,6 +2281,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
+      propertyPath: body
+      value: 
+      objectReference: {fileID: 1531023843}
     - target: {fileID: 4742494757245736701, guid: 0de5a9f07eb0a0249b27c2c58d5addbf, type: 3}
       propertyPath: target
       value: 

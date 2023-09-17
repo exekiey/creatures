@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using System;
 using System.Runtime.CompilerServices;
+using UnityEngine.UIElements;
 
 public struct Cell
 {
@@ -113,15 +114,26 @@ public class GridScript : MonoBehaviour
     public static Vector2 GetSizeInCells(Vector2 size)
     {
 
-
+        /*
         float error = 0.01f;
 
         size -= Vector2.one * error;
-
+        */
         return new Vector2(Mathf.Ceil(size.x / GridSize), Mathf.Ceil(size.y / GridSize));
 
     }
     
+    public static Vector2 RoundToCell(Vector2 position)
+    {
+
+        Cell cell = GetCellCoords(position);
+        Vector2 pos = GetRealWorldCoords(cell);
+
+        return pos;
+
+        return new Vector2(Mathf.Floor(position.x / instance.gridSize), Mathf.Floor(position.y / instance.gridSize));
+    }
+
     private void OnDrawGizmos()
     {
         float cameraHeight = Camera.main.orthographicSize;

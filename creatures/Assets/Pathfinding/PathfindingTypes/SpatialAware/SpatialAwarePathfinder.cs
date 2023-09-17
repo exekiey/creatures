@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Xml.Linq;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 
@@ -19,6 +15,10 @@ public class SpatialAwarePathfinder : Pathfinder
     {
 
         Vector2 pivot;
+        pivot = gameObject.transform.position;
+
+        /*
+        pivot = GridScript.RoundToCell(gameObject.transform.position);
 
         pivot = gameObject.transform.position;
 
@@ -32,7 +32,12 @@ public class SpatialAwarePathfinder : Pathfinder
         fixedScale *= GridScript.GridSize;
 
         pivot += fixedScale;
-        
+        */
+
+        pivot += (Vector2) gameObject.transform.lossyScale / 2;
+        pivot.x -= GridScript.GridSize / 2;
+        pivot.y -= GridScript.GridSize / 2;
+
         return pivot;
 
 
@@ -105,6 +110,10 @@ public class SpatialAwarePathfinder : Pathfinder
 
                 Node currentNode = new Node(i, j);
 
+                if (obstacleNodes.Contains(currentNode))
+                {
+                    continue;
+                }
 
                 bool isSpaceBigEnough = IsSpaceBigEnough(currentNode);
 
@@ -115,6 +124,14 @@ public class SpatialAwarePathfinder : Pathfinder
 
             }
         }
+
+        foreach(Node currentNode in unfittingNodes)
+        {
+            /*
+            if (currentNode != null)
+            Debug.Log(currentNode.ToString());
+            */
+        }
     }
 
     private bool IsSpaceBigEnough(Node node)
@@ -123,7 +140,6 @@ public class SpatialAwarePathfinder : Pathfinder
 
         for (int i = 1; i < _size.x; i++)
         {
-
             if (obstacleNodes.Contains(new Node(node.X - i, node.Y)))
             {
 

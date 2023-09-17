@@ -154,11 +154,11 @@ public class TentaclePathfindingPlacer : MonoBehaviour
                     nextPosition = GridScript.GetRealWorldCoords(nextCell);
                 }
 
-                Vector2 currentPosition = _tentacle.Tentacle.Points.Last().currentPosition;
+                Vector2 currentPosition = _tentacle.Tentacle.Last.currentPosition;
 
                 Vector2 direction = (nextPosition - currentPosition).normalized;
 
-                _tentacle.Tentacle.Points.Last().currentPosition += direction * _tentacle.MoveForce;
+                _tentacle.Tentacle.Last.currentPosition += direction * _tentacle.MoveForce;
 
             }
             else

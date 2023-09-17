@@ -16,7 +16,6 @@ abstract class TentacleState
 
     protected TentaclePathFinding _context;
 
-
     public TentacleState(TentaclePathFinding context)
     {
         _context = context;
@@ -61,6 +60,9 @@ class PluggedState : TentacleState
     public override void EnterState(params object[] parameters)
     {
 
+        _context.ContributeForcePositive();
+        _context.ContributeGravityNegative();
+        _context.Tentacle.Last.locked = true;
     }
     public override void UpdateState()
     {
@@ -80,6 +82,10 @@ class PluggedState : TentacleState
     }
     public override void ExitState()
     {
+        _context.Tentacle.Last.locked = false;
+        _context.AttachedGrabable.Deselect();
+        _context.ContributeForceNegative();
+        _context.ContributeGravityPositive();
     }
 
 
@@ -96,19 +102,26 @@ class MovingState : TentacleState
 
     Cell lastCell;
 
-    PathFinding pathFinding = new PathFinding();
+    PathFinding pathFinding;
+
+    float tooLongWaitingCounter;
 
     public MovingState(TentaclePathFinding context) : base(context)
     {
-
+        tooLongWaitingCounter = 0;
     }
 
     public override void EnterState(params object[] parameters)
     {
+        FindGrabable();
+    }
 
-        Grabable grabable = Grabable.ClosestGrabable(_context.transform.position);
+    private void FindGrabable()
+    {
+        pathFinding = new PathFinding();
 
-        Debug.Log(grabable);
+        Grabable grabable = Grabable.ClosestGrabable(_context.Body.transform.position);
+
 
         if (grabable == null)
         {
@@ -117,36 +130,48 @@ class MovingState : TentacleState
             return;
         }
 
+        _context.AttachedGrabable = grabable;
+
         cellPath = pathFinding.GetPath(_context.Tentacle.Points.First().currentPosition, grabable.transform.position);
 
         currentCell = cellPath.First();
 
-        cellPath.RemoveFirst();
+        nextCell = cellPath.First.Next.Value;
 
-        nextCell = cellPath.First();
+        nextPosition = GridScript.GetRealWorldCoords(nextCell);
 
         lastCell = cellPath.Last();
     }
+
     public override void UpdateState()
     {
+
+        currentCell = GridScript.GetCellCoords(_context.Tentacle.Last.currentPosition);
 
         if (currentCell != lastCell)
         {
 
-            currentCell = GridScript.GetCellCoords(_context.transform.position);
 
-            if (currentCell == nextCell)
+            if (cellPath.Contains(currentCell))
             {
-                cellPath.RemoveFirst();
-                nextCell = cellPath.First();
+                nextCell = cellPath.Find(currentCell).Next.Value;
                 nextPosition = GridScript.GetRealWorldCoords(nextCell);
+            } else
+            {
+
+                pathFinding = new PathFinding();
+
+                cellPath = pathFinding.GetPath(_context.Tentacle.Last.currentPosition, _context.AttachedGrabable.transform.position);
+
             }
 
-            Vector2 currentPosition = _context.Tentacle.Points.Last().currentPosition;
+
+
+            Vector2 currentPosition = _context.Tentacle.Last.currentPosition;
 
             Vector2 direction = (nextPosition - currentPosition).normalized;
 
-            _context.Tentacle.Points.Last().currentPosition += direction * _context.MoveForce;
+            _context.Tentacle.Last.currentPosition += direction * _context.MoveForce * Time.deltaTime;
 
         } else
         {
@@ -154,7 +179,17 @@ class MovingState : TentacleState
             _context.SwitchState(State.Plugged);
 
         }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            _context.AttachedGrabable.Deselect();
+            FindGrabable();
+        }
+
+        tooLongWaitingCounter += Time.deltaTime;
     }
+
+
     public override void FixedUpdateState()
     {
     }
@@ -169,35 +204,22 @@ public class TentaclePathFinding : MonoBehaviour
 
     [SerializeField] GameObject target;
     [SerializeField] float moveForce;
+    [SerializeField] SeekingScript body;
+    TentaclePathFindingForceContributor forceContributor;
 
     HangingState hanging;
     MovingState moving;
     PluggedState plugged;
     TentacleState current;
 
-    Vector2 targetPosition;
-
     Tentacle tentacle;
 
-    PathFinding pathFinding;
-
-    LinkedList<Cell> cellPath;
-
-    Cell lastCell;
-
-    [SerializeField] Vector2 nextCellVector;
-    [SerializeField] Vector2 currentCellVector;
-
-    bool isPlugged;
-    private bool isMoving;
-    //temp
-    [SerializeField] float nextDistance;
-    [SerializeField] float currentDistance;
+    Grabable attachedGrabable;
 
     public float MoveForce { set => moveForce = value; get => moveForce; }
-    public bool IsPlugged { get => isPlugged; }
-    public bool IsMoving { get => isMoving; }
     public Tentacle Tentacle { get => tentacle; set => tentacle = value; }
+    public Grabable AttachedGrabable { get => attachedGrabable; set => attachedGrabable = value; }
+    public SeekingScript Body { get => body; }
 
     /*
     public void SetTarget(GameObject value)
@@ -233,7 +255,7 @@ public class TentaclePathFinding : MonoBehaviour
     private void Awake()
     {
         tentacle = GetComponent<Tentacle>();
-
+        forceContributor = transform.parent.GetComponent<TentaclePathFindingForceContributor>();
     }
 
     private void Start()
@@ -243,7 +265,8 @@ public class TentaclePathFinding : MonoBehaviour
         moving = new MovingState(this);
         plugged = new PluggedState(this);
 
-        SwitchState(State.Moving);
+        current = moving;
+        current.EnterState();
 
     }
 
@@ -333,26 +356,22 @@ public class TentaclePathFinding : MonoBehaviour
     public void SwitchState(State state)
     {
 
+        current.ExitState();
         switch (state)
         {
 
             case State.Moving:
-                moving.ExitState();
                 current = moving;
-                moving.EnterState();
                 break;
             case State.Plugged:
-                plugged.ExitState();
                 current = plugged;
-                plugged.EnterState();
                 break;
             case State.Hanging:
-                hanging.ExitState();
                 current = hanging;
-                hanging.EnterState();
                 break;
 
         }
+        current.EnterState();
 
     }
 
@@ -410,4 +429,23 @@ public class TentaclePathFinding : MonoBehaviour
 
     }
     */
+
+    public void ContributeForcePositive()
+    {
+        forceContributor.ContributeForcePositive();
+    }
+    public void ContributeForceNegative()
+    {
+        forceContributor.ContributeForceNegative();
+    }
+
+    public void ContributeGravityPositive()
+    {
+        forceContributor.ContributeGravityPositive();
+    }
+    public void ContributeGravityNegative()
+    {
+        forceContributor.ContributeGravityNegative();
+    }
+
 }

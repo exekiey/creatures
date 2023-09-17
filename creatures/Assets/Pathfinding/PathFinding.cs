@@ -172,7 +172,7 @@ public class PathFinding
                 pathfinder = new SpatialAwarePathfinder(obstacleNodes, visitedNodes, waitingNodes, scale);
                 break;
             default:
-                pathfinder = new Pathfinder(obstacleNodes, visitedNodes, waitingNodes);
+                pathfinder = new Pathfinder  (obstacleNodes, visitedNodes, waitingNodes);
                 break;
 
         }

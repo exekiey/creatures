@@ -33,6 +33,11 @@ public class Grabable : MonoBehaviour
 
     }
 
+    public void Deselect()
+    {
+        isSelected = false;
+    }
+
     public static Grabable ClosestGrabable(Vector2 position, Grabable grabable = null)
     {
 

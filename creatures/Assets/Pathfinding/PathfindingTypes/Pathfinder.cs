@@ -74,20 +74,20 @@ public class Pathfinder
 
 
         //diagonals
-        /*
+        
         float squareOfTwo = 1.414f;
-        Node downLeft = new Node(node.X - 1, node.Y - 1, this, squareOfTwo);
+        Node downLeft = new Node(node.X - 1, node.Y - 1, node, squareOfTwo);
         neighbours.Add(downLeft);
 
-        Node downRight = new Node(node.X + 1, node.Y - 1, this, squareOfTwo);
+        Node downRight = new Node(node.X + 1, node.Y - 1, node, squareOfTwo);
         neighbours.Add(downRight);
 
-        Node upLeft = new Node(node.X - 1, node.Y + 1, this, squareOfTwo);
+        Node upLeft = new Node(node.X - 1, node.Y + 1, node, squareOfTwo);
         neighbours.Add(upLeft);
 
-        Node upRight = new Node(node.X + 1, node.Y + 1, this, squareOfTwo);
+        Node upRight = new Node(node.X + 1, node.Y + 1, node, squareOfTwo);
         neighbours.Add(upRight);
-        */
+        
 
         return neighbours;
     }

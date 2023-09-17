@@ -121,16 +121,21 @@ public class Tentacle : MonoBehaviour
     bool shouldSnapShotCollision;
     private float separation;
 
+    LayerMask collisionLayerMask;
+
     public Point[] Points { get => points; set => points = value; }
     public float CurrentTotalLength { get => currentTotalLength; }
     public float TentacleLength { get => tentacleLength; }
     public float Loseness { get => loseness; set => loseness = value; }
     public bool IsColliding { get => _isColliding;  }
     public float Separation { get => separation; }
+    public Point Last { get => last; set => last = value; }
 
     // Start is called before the first frame update
     void Awake()
     {
+
+        collisionLayerMask = LayerMask.GetMask("obstacle");
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = numberOfPoints;
@@ -177,7 +182,7 @@ public class Tentacle : MonoBehaviour
         foreach (Point currentPoint in points)
         {
 
-            int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer);
+            int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer, layerMask: collisionLayerMask);
 
 
             //loop through every collider that the current point is colliding with
@@ -559,7 +564,7 @@ public class Tentacle : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-
+        /*
         if (points != null)
         {
 
@@ -597,7 +602,7 @@ public class Tentacle : MonoBehaviour
 
         }
 
-
+        */
 
 #if (UNITY_EDITOR)
         Gizmos.DrawLine(transform.position, transform.position + Vector3.right * generationDistance);
