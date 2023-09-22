@@ -243,6 +243,12 @@ public class PathFinding
     public LinkedList<Cell> GetPath(Vector2 from, Vector2 to)
     {
 
+        visitedNodes = new List<Node>();
+        
+        //waitingNodes = new HashSet<Node>();
+        
+        waitingNodes.Clear();
+
         originCell = GridScript.GetCellCoords(from);
 
         destinationCell = GridScript.GetCellCoords(to);
@@ -267,7 +273,6 @@ public class PathFinding
 
     LinkedList<Node> AStarPathFinding()
     {
-
         Node currentNode = originNode;
         int counter = 0;
 

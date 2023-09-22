@@ -22,7 +22,7 @@ public class TentacleLockOnPos : MonoBehaviour
     {
         if (doLock)
         {
-
+            tentacle.Points[0].locked = true;
             tentacle.Points[0].currentPosition = pos;
 
         }

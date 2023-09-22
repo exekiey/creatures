@@ -179,13 +179,12 @@ class MovingState : TentacleState
             _context.SwitchState(State.Plugged);
 
         }
-
-        if (Input.GetKeyDown(KeyCode.Space))
+        /*
+        if (tooLongWaitingCounter > 5)
         {
             _context.AttachedGrabable.Deselect();
             FindGrabable();
-        }
-
+        }*/
         tooLongWaitingCounter += Time.deltaTime;
     }
 
@@ -204,7 +203,7 @@ public class TentaclePathFinding : MonoBehaviour
 
     [SerializeField] GameObject target;
     [SerializeField] float moveForce;
-    [SerializeField] SeekingScript body;
+    [SerializeField] OctopusSeekingScript body;
     TentaclePathFindingForceContributor forceContributor;
 
     HangingState hanging;
@@ -219,7 +218,7 @@ public class TentaclePathFinding : MonoBehaviour
     public float MoveForce { set => moveForce = value; get => moveForce; }
     public Tentacle Tentacle { get => tentacle; set => tentacle = value; }
     public Grabable AttachedGrabable { get => attachedGrabable; set => attachedGrabable = value; }
-    public SeekingScript Body { get => body; }
+    public OctopusSeekingScript Body { get => body; }
 
     /*
     public void SetTarget(GameObject value)

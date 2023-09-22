@@ -6,6 +6,7 @@ using System.Transactions;
 using Unity.Profiling;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Animations;
 using UnityEngine.Rendering;
 
 
@@ -95,9 +96,11 @@ public class Tentacle : MonoBehaviour
     [SerializeField] int numberOfPoints;
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
+    [SerializeField] int rotationChecktIterations;
     [SerializeField] float gravity = 10f;
     [SerializeField] float loseness;
     [SerializeField] float generationDistance;
+    [SerializeField] float minAngle;
 
     [SerializeField] bool _isColliding;
 
@@ -107,6 +110,8 @@ public class Tentacle : MonoBehaviour
     Vector2 origin;
     Point[] points;
     Point last;
+    Point first;
+    Point midPoint;
     [SerializeField] float currentTotalLength;
 
 
@@ -127,9 +132,15 @@ public class Tentacle : MonoBehaviour
     public float CurrentTotalLength { get => currentTotalLength; }
     public float TentacleLength { get => tentacleLength; }
     public float Loseness { get => loseness; set => loseness = value; }
-    public bool IsColliding { get => _isColliding;  }
+    public bool IsColliding { get => _isColliding; }
     public float Separation { get => separation; }
-    public Point Last { get => last; set => last = value; }
+    public Point Last { get => last; }
+    public Point First { get => first; }
+    public Point MidPoint { get => midPoint; }
+    public int NumberOfPoints { get => numberOfPoints; set => numberOfPoints = value; }
+    public float Gravity { get => gravity; set => gravity = value; }
+
+    float angleCorrection;
 
     // Start is called before the first frame update
     void Awake()
@@ -150,11 +161,11 @@ public class Tentacle : MonoBehaviour
 
         GenerateCollisionInfo();
 
-        points.First().locked = false;
-
 
         last = points.Last();
-
+        first = points.First();
+        midPoint = points[numberOfPoints / 2];
+        angleCorrection = minAngle * Mathf.Deg2Rad / 2;
 
 
     }
@@ -326,7 +337,7 @@ public class Tentacle : MonoBehaviour
                         Point currentPoint = currentCollisionInfo.collidingPoints[j];
 
                         Vector2 pointInLocal = currentCollisionInfo.worldToLocal.MultiplyPoint(currentPoint.currentPosition);
-                        
+
                         Vector2 halfSize = currentCollisionInfo.size / 2;
                         Vector2 scalar = currentCollisionInfo.scale;
 
@@ -362,7 +373,7 @@ public class Tentacle : MonoBehaviour
 
                         currentPoint.currentPosition = hitPos;
 
-                        
+
                     }
                     break;
             }
@@ -398,7 +409,6 @@ public class Tentacle : MonoBehaviour
 
 
     }
-
 
     private void MoveSimulation()
     {
@@ -460,13 +470,110 @@ public class Tentacle : MonoBehaviour
 
                 currentTotalLength += separation;
             }
-
-
+            //RotatePoints(i);
         }
 
         //Debug.Log("----------");
     }
 
+    void RotationConstraint()
+    {
+
+        for (int i = 1; i <  numberOfPoints - 1; i++)
+        {
+            RotatePoints(i);
+        }
+
+
+    }
+
+    private void RotatePoints(int i)
+    {
+
+        if (i == 0 || i == numberOfPoints - 1) return;
+
+        Point currentPoint = points[i];
+        Point previousPoint = points[i - 1];
+        Point nextPoint = points[i + 1];
+
+        Vector2 previousVector = previousPoint.currentPosition - currentPoint.currentPosition;
+        Vector2 nextVector = nextPoint.currentPosition - currentPoint.currentPosition;
+
+        float angle = Vector2.Angle(previousVector, nextVector);
+
+        if (angle < minAngle)
+        {
+
+            //
+
+            Vector2 bisection = (previousVector + nextVector) / 2;
+
+            if (!previousPoint.locked)
+            {
+
+                FixPointRotationLeft(currentPoint, previousPoint, previousVector, bisection);
+            }
+
+            if (!nextPoint.locked)
+            {
+                FixPointRotationRight(currentPoint, nextPoint, nextVector, bisection);
+            }
+        }
+    }
+
+    private void FixPointRotationRight(Tentacle.Point currentPoint, Tentacle.Point point, Vector2 vector, Vector2 bisection)
+    {
+
+
+        Vector2 orientation = Vector2.Perpendicular(bisection).normalized;
+        Debug.DrawLine(currentPoint.currentPosition, currentPoint.currentPosition + orientation);
+        Debug.DrawLine(currentPoint.currentPosition, currentPoint.currentPosition - orientation);
+
+        float orientationAngle = Mathf.Atan2(bisection.y, bisection.x);
+
+        orientationAngle -= angleCorrection;
+
+        float length = vector.magnitude;
+
+
+        float correctionX = length * Mathf.Cos(orientationAngle);
+        float correctionY = length * Mathf.Sin(orientationAngle);
+
+        Vector2 correctionVector = new Vector2(correctionX, correctionY);
+
+        Vector2 fixedPosition = currentPoint.currentPosition + correctionVector;
+
+        Debug.DrawLine(currentPoint.currentPosition, fixedPosition, Color.red);
+
+        point.currentPosition = fixedPosition;
+
+    }
+
+    private void FixPointRotationLeft(Tentacle.Point currentPoint, Tentacle.Point point, Vector2 vector, Vector2 bisection)
+    {
+
+
+        Vector2 orientation = Vector2.Perpendicular(bisection).normalized;
+        Debug.DrawLine(currentPoint.currentPosition, currentPoint.currentPosition + orientation);
+        Debug.DrawLine(currentPoint.currentPosition, currentPoint.currentPosition - orientation);
+
+        float orientationAngle = Mathf.Atan2(bisection.y, bisection.x);
+
+        orientationAngle += angleCorrection;
+
+        float length = vector.magnitude;
+
+
+        float correctionX = length * Mathf.Cos(orientationAngle);
+        float correctionY = length * Mathf.Sin(orientationAngle);
+
+        Vector2 correctionVector = new Vector2(correctionX, correctionY);
+
+        Vector2 fixedPosition = currentPoint.currentPosition + correctionVector;
+
+        point.currentPosition = fixedPosition;
+
+    }
     private void FixedUpdate()
     {
         shouldSnapShotCollision = true;
@@ -479,7 +586,7 @@ public class Tentacle : MonoBehaviour
         Point first = points.First();
 
         separation = Vector2.Distance(first.currentPosition, last.currentPosition);
-        
+
         if (first.locked && last.locked) return;
 
         if (separation < tentacleLength) return;
@@ -498,7 +605,7 @@ public class Tentacle : MonoBehaviour
             return;
         }
 
-        if (last.locked && separation + loseness> tentacleLength)
+        if (last.locked && separation + loseness > tentacleLength)
         {
             first.currentPosition -= correctionVector;
             return;
@@ -512,7 +619,7 @@ public class Tentacle : MonoBehaviour
 
     void SimulateTentacle()
     {
-        
+
         if (shouldSnapShotCollision)
         {
             SnapshotCollision();
@@ -522,12 +629,16 @@ public class Tentacle : MonoBehaviour
         FirstAndLastDistanceConstraint();
 
         currentTotalLength = 0;
-        
-        for (int i = 0; i < distanceCheckIterations; i++)
+
+
+        for (int _ = 0; _ < distanceCheckIterations; _++)
         {
             AdjustCollisions();
-            DistanceConstraint(i == distanceCheckIterations - 1);
+            DistanceConstraint(_ == distanceCheckIterations - 1);
         }
+
+
+
 
     }
 
@@ -564,14 +675,14 @@ public class Tentacle : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        /*
+        
         if (points != null)
         {
 
             foreach (Point point in points)
             {
 
-                Handles.Label(point.currentPosition, point.id.ToString());
+                //Handles.Label(point.currentPosition, point.id.ToString());
 
                 if (point.locked)
                 {
@@ -592,21 +703,21 @@ public class Tentacle : MonoBehaviour
 
                 //Gizmos.DrawSphere(point.currentPosition, collisionRadius);
             }
-
+            /*
             GUIStyle style = new GUIStyle();
             style.normal.textColor = Color.red;
 
             Handles.Label(points.Last().currentPosition + Vector2.left * 0.5f, currentTotalLength.ToString(), style);
-
+            */
 
 
         }
 
-        */
+        
 
 #if (UNITY_EDITOR)
         Gizmos.DrawLine(transform.position, transform.position + Vector3.right * generationDistance);
-        #endif
+#endif
 
     }
 }

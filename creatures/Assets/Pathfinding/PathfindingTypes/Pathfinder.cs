@@ -74,7 +74,7 @@ public class Pathfinder
 
 
         //diagonals
-        
+        /*
         float squareOfTwo = 1.414f;
         Node downLeft = new Node(node.X - 1, node.Y - 1, node, squareOfTwo);
         neighbours.Add(downLeft);
@@ -87,7 +87,7 @@ public class Pathfinder
 
         Node upRight = new Node(node.X + 1, node.Y + 1, node, squareOfTwo);
         neighbours.Add(upRight);
-        
+        */
 
         return neighbours;
     }

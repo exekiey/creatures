@@ -3,15 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class SeekingScript : MonoBehaviour
+public class OctopusSeekingScript : MonoBehaviour
 {
     [SerializeField] Vector2 targetPosition;
     [SerializeField] float moveForce;
-
-    [SerializeField] public bool followCursor;
-    [HideInInspector] public GameObject tarjetObject;
-
-    Cell currentCell;
+    [SerializeField] PreyScript tarjetObject;
 
     [SerializeField] bool usePathFinding;
 
@@ -32,7 +28,8 @@ public class SeekingScript : MonoBehaviour
     private void Start()
     {
 
-        targetPosition = tarjetObject.transform.position;
+
+        pivotPosition = SpatialAwarePathfinder.PivotPosition(gameObject);
 
         if (usePathFinding)
         {
@@ -44,10 +41,12 @@ public class SeekingScript : MonoBehaviour
 
             //gameObject.transform.SetParent(pivot.transform);
 
-            cellPath = _pathFinding.GetPath(SpatialAwarePathfinder.PivotPosition(gameObject), targetPosition);
+            cellPath = _pathFinding.GetPath(pivotPosition, tarjetObject.transform.position);
 
             nextCell = cellPath.First();
-            
+
+            targetPosition = GridScript.GetRealWorldCoords(nextCell);
+
             cellPath.RemoveFirst();
 
         }
@@ -56,8 +55,15 @@ public class SeekingScript : MonoBehaviour
 
     }
 
+    private void OnEnable()
+    {
+        tarjetObject.changedCell += Reroute;
+    }
 
-
+    private void OnDisable()
+    {
+        tarjetObject.changedCell -= Reroute;
+    }
 
     private void Update()
     {
@@ -80,6 +86,19 @@ public class SeekingScript : MonoBehaviour
 
     }
 
+    bool ApproximatelyVector2(Vector2 a, Vector2 b, float threshold)
+    {
+
+        float xDiff = Mathf.Abs(a.x - b.x);
+        float yDiff = Mathf.Abs(a.y - b.y);
+
+        bool xEquals = xDiff <= threshold;
+        bool yEquals = yDiff <= threshold;
+
+        return xEquals && yEquals;
+
+    }
+
     private void FixedUpdate()
     {
         
@@ -88,8 +107,9 @@ public class SeekingScript : MonoBehaviour
 
             if (cellPath.Count > 0)
             {
-                if (GridScript.GetCellCoords(pivotPosition) == nextCell)
+                if (ApproximatelyVector2(pivotPosition, targetPosition, 0.01f))
                 {
+
                     nextCell = cellPath.First();
                     cellPath.RemoveFirst();
 
@@ -102,7 +122,21 @@ public class SeekingScript : MonoBehaviour
 
         Vector2 direction = (targetPosition - pivotPosition).normalized;
 
-        _rigidbody2D.AddForceAtPosition(direction * moveForce, Vector2.zero);
+        //_rigidbody2D.AddForceAtPosition(direction * moveForce, Vector2.zero);
+        _rigidbody2D.AddForce(direction * moveForce);
+        _rigidbody2D.velocity = direction * moveForce;
+
+    }
+
+    void Reroute()
+    {
+        cellPath = _pathFinding.GetPath(pivotPosition, tarjetObject.transform.position);
+
+        nextCell = cellPath.First.Next.Value;
+
+        targetPosition = GridScript.GetRealWorldCoords(nextCell);
+
+        cellPath.RemoveFirst();
 
     }
 

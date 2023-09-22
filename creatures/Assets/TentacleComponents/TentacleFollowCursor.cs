@@ -13,6 +13,7 @@ public class TentacleFollowCursor : MonoBehaviour
 
     [SerializeField] bool first;
     [SerializeField] bool last;
+    [SerializeField] bool mid;
 
     // Start is called before the first frame update
     void Awake()
@@ -33,6 +34,17 @@ public class TentacleFollowCursor : MonoBehaviour
         if (last)
         {
             tentacle.Points.Last().currentPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
+        }
+
+        if (Input.GetMouseButton(0))
+        {
+
+            tentacle.MidPoint.currentPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
+        }
+
+        if (mid)
+        {
+            tentacle.MidPoint.currentPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
         }
 
 

@@ -6,7 +6,7 @@ using UnityEngine;
 public class TentaclePathFindingForceContributor : MonoBehaviour
 {
 
-    [SerializeField] SeekingScript body;
+    [SerializeField] OctopusSeekingScript body;
     Rigidbody2D parentRigidbody2D;
     float forceContribution;
     float gravityContribution;
