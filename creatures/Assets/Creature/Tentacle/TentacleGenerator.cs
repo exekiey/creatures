@@ -10,9 +10,13 @@ using UnityEngine.Rendering;
 
 
 
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
 
 
 public class TentacleGenerator : MonoBehaviour
+=======
+public class Tentacle : MonoBehaviour
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 {
 
     enum ColliderType
@@ -93,8 +97,16 @@ public class TentacleGenerator : MonoBehaviour
     [SerializeField] float tentacleLength;
     [SerializeField] int distanceCheckIterations = 50;
     [SerializeField] float gravity = 10f;
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
     [SerializeField] private bool followCursor;
     [SerializeField] float tentacleWidth;
+=======
+    [SerializeField] float loseness;
+    [SerializeField] float generationDistance;
+    [SerializeField] string[] collidingLayers;
+
+    [SerializeField] bool _isColliding;
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 
     LineRenderer lineRenderer;
 
@@ -102,6 +114,7 @@ public class TentacleGenerator : MonoBehaviour
     private float halfSegment;
     Vector2 origin;
     Point[] points;
+    Vector2[] positions;
     Point last;
 
     [SerializeField] SuckerScript sucker;
@@ -116,17 +129,43 @@ public class TentacleGenerator : MonoBehaviour
     CollisionInfo[] collisionInfos;
     Collider2D[] colliderBuffer;
     bool shouldSnapShotCollision;
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
+=======
+    private float separation;
+
+    public Point[] Points { get => points; set => points = value; }
+    public Vector2[] Positions { get =>  positions; }
+
+    public float CurrentTotalLength { get => currentTotalLength; }
+    public float TentacleLength { get => tentacleLength; }
+    public float Loseness { get => loseness; set => loseness = value; }
+    public bool IsColliding { get => _isColliding; }
+    public float Separation { get => separation; }
+    public Point Last { get => last; }
+    public Point First { get => first; }
+    public Point MidPoint { get => midPoint; }
+    public int NumberOfPoints { get => numberOfPoints; set => numberOfPoints = value; }
+    public float Gravity { get => gravity; set => gravity = value; }
+
+    float angleCorrection;
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 
     // Start is called before the first frame update
     void Awake()
     {
 
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
+=======
+        
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = numberOfPoints;
+        
 
         segmentLength = tentacleLength / (numberOfPoints - 1);
 
         points = new Point[numberOfPoints];
+        positions = new Vector2[numberOfPoints];
 
         origin = transform.position;
 
@@ -137,6 +176,11 @@ public class TentacleGenerator : MonoBehaviour
         points.First().locked = false;
 
         last = points.Last();
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
+=======
+        first = points.First();
+        midPoint = points[numberOfPoints / 2];
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 
 
     }
@@ -164,7 +208,11 @@ public class TentacleGenerator : MonoBehaviour
         foreach (Point currentPoint in points)
         {
 
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
             int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer);
+=======
+            int collisions = Physics2D.OverlapCircleNonAlloc(currentPoint.currentPosition, collisionRadius, colliderBuffer, layerMask: LayerMask.GetMask(collidingLayers));
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 
             Debug.Log(currentPoint.id + ":" + collisions);
 
@@ -435,8 +483,21 @@ public class TentacleGenerator : MonoBehaviour
                 points[i + 1].currentPosition = fixedNext;
             }
 
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
 
+=======
+            positions[i] = currentPos;
+
+            if (isLast)
+            {
+
+                currentTotalLength += separation;
+            }
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
         }
+
+
+        positions[numberOfPoints - 1] = points[numberOfPoints - 1].currentPosition;
 
         //Debug.Log("----------");
     }
@@ -543,7 +604,11 @@ public class TentacleGenerator : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
 
+=======
+        /*
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
         if (points != null)
         {
 
@@ -571,9 +636,27 @@ public class TentacleGenerator : MonoBehaviour
 
                 Gizmos.DrawSphere(point.currentPosition, collisionRadius);
             }
+<<<<<<< Updated upstream:creatures/Assets/Creature/Tentacle/TentacleGenerator.cs
 
 
         }
+=======
+            
+            GUIStyle style = new GUIStyle();
+            style.normal.textColor = Color.red;
+
+            Handles.Label(points.Last().currentPosition + Vector2.left * 0.5f, currentTotalLength.ToString(), style);
+            
+
+
+        }
+        */
+        
+
+#if (UNITY_EDITOR)
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.right * generationDistance);
+#endif
+>>>>>>> Stashed changes:creatures/Assets/Creature/Tentacle/Tentacle.cs
 
     }
 }
