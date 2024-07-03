@@ -131,7 +131,7 @@ public class OctopusSeekingScript : MonoBehaviour
     void Reroute()
     {
         cellPath = _pathFinding.GetPath(pivotPosition, tarjetObject.transform.position);
-
+        int x;
         nextCell = cellPath.First.Next.Value;
 
         targetPosition = GridScript.GetRealWorldCoords(nextCell);
