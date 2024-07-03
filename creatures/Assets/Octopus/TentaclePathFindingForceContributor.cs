@@ -18,7 +18,7 @@ public class TentaclePathFindingForceContributor : MonoBehaviour
 
         parentRigidbody2D = GetComponentInParent<Rigidbody2D>();
 
-        int numberOfActiveTentacleChildren = GetComponentsInChildren<TentaclePathFinding>().Count();
+        int numberOfActiveTentacleChildren = GetComponentsInChildren<TentacleBehaviour>().Count();
 
         forceContribution = body.MoveForce / numberOfActiveTentacleChildren;
         gravityContribution = parentRigidbody2D.gravityScale / numberOfActiveTentacleChildren;

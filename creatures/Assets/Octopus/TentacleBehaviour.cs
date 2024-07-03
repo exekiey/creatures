@@ -14,9 +14,9 @@ public enum State
 abstract class TentacleState
 {
 
-    protected TentaclePathFinding _context;
+    protected TentacleBehaviour _context;
 
-    public TentacleState(TentaclePathFinding context)
+    public TentacleState(TentacleBehaviour context)
     {
         _context = context;
     }
@@ -32,7 +32,7 @@ abstract class TentacleState
 class HangingState : TentacleState
 {
 
-    public HangingState(TentaclePathFinding context) : base(context)
+    public HangingState(TentacleBehaviour context) : base(context)
     {
     }
 
@@ -53,7 +53,7 @@ class HangingState : TentacleState
 
 class PluggedState : TentacleState
 {
-    public PluggedState(TentaclePathFinding context) : base(context)
+    public PluggedState(TentacleBehaviour context) : base(context)
     {
     }
 
@@ -106,7 +106,7 @@ class MovingState : TentacleState
 
     float tooLongWaitingCounter;
 
-    public MovingState(TentaclePathFinding context) : base(context)
+    public MovingState(TentacleBehaviour context) : base(context)
     {
         tooLongWaitingCounter = 0;
     }
@@ -198,7 +198,7 @@ class MovingState : TentacleState
 }
 
 [RequireComponent(typeof(Tentacle))]
-public class TentaclePathFinding : MonoBehaviour
+public class TentacleBehaviour : MonoBehaviour
 {
 
     [SerializeField] GameObject target;
